@@ -82,7 +82,3 @@ PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 | 01_SRv6_DataPlane.md       | Implement 2001:db8:1000::/48 locator with SID re-advertising.         |
 | 02_Route_Scale_Testing.md  | BMP replay of 1 million+ routes into ISP1_OSLO for stress validation. |
 | 03_Telemetry_Streaming.md  | Export SR-TE stats using gNMI to InfluxDB + Grafana dashboards.       |
-
-* **IPv6 SRv6 data‑plane** - encode locator 2001:db8:1000::/48 , re‑advertise SID list
-* **Full‑table scale** - load 1‑million prefixes from BMP‑replay into ISP1_OSLO for stress testing.
-* **Streaming telemetry (gNMI)** - export SR‑TE counters to InfluxDB + Grafana
