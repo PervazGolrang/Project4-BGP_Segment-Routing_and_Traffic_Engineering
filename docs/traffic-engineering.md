@@ -58,7 +58,9 @@ Preference: 150
 
 * All policies use **dynamic candidate-paths** unless otherwise defined.
 * BGP-LS is assumed to be distributing SIDs and topology.
-* Policy activation is monitored using 
+* Policy activation is monitored using
+```markdown
     `show segment-routing traffic-eng policy` - Policy status and activaton
     `show segment-routing traffic-eng tunnels`- Tunnel state and path information
     `show segment-routing mpls interfaces`- Interface-level SR-MPLS information
+```
