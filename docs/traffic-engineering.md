@@ -62,5 +62,5 @@ Preference: 150
 ```markdown
     `show segment-routing traffic-eng policy` - Policy status and activaton
     `show segment-routing traffic-eng tunnels`- Tunnel state and path information
-    `show segment-routing mpls interfaces`- Interface-level SR-MPLS information
+    `show segment-routing mpls interfaces`    - Interface-level SR-MPLS information
 ```
