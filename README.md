@@ -1,4 +1,4 @@
-# BGP Segment‑Routing & Traffic Engineering Lab (Project 4)
+# Project 4 - BGP Segment‑Routing & Traffic Engineering Lab
 
 ## Overview
 
