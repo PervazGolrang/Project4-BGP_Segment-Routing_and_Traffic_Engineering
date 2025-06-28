@@ -58,7 +58,7 @@ PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 | Requirement    | Minimum                              | Notes                                 |
 | -------------- | ------------------------------------ | ------------------------------------- |
 | Hypervisor RAM | 32 GB                                | 18 routers + 1 Linux container        |
-| vCPU count     | 16                                   | Lab stable at 5% CPU‑idle             |
+| vCPU count     | 16                                   | Lab stable at x% CPU‑idle (Undifined) |
 | CML‑2 images   | cat8000v 17.15.01a, alpine‑linux     | EVE‑NG works equivalently             |
 
 ## Implementation Milestones
