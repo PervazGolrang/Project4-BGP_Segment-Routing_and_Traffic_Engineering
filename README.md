@@ -23,7 +23,9 @@ Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **B
   * **Upstreams**: ISP1_OSLO, ISP1_BGO (same ASN, different PoPs)
   * **Public Peers**: PEER1_OSLO, PEER2_BGO
   * **Customer Edges**: CUST1_OSLO, CUST2_BGO
-  * **Customer Core & Server**: CUST_CORE_OSLO, CUST_SRV1_OSLO
+  * **Customer Core & Server**: CUST_CORE_OSLO, CUST_SRV1
+
+### Topology
 
 [`project4_bgp_sr_te.drawio`](topology/project4_bgp_sr_te.drawio)  
 [`project4_bgp_sr_te.png`](topology/project4_bgp_sr_te.png)
@@ -32,22 +34,23 @@ Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **B
 
 ```
 PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
-├── configs/            # Device‑specific startup‑configs (.txt)
+├── configs/                    # Device‑specific startup‑configs (.yaml)
 ├── docs/
-│   ├── IP_Plan.md      # All /30 links and loopback /32s
-│   ├── Design.md       # Detailed design narrative (architecture, SRG allocations)
-│   ├── TE_Policies.md  # Colour map, policy table, binding‑SID catalogue
-│   └── Verification.md # Ping/trace/bfd/convergence test scripts
-├── steps/              # Ordered implementation guides
+│   ├── IP_Plan.md              # All /30 links and loopback /32s
+│   ├── Design.md               # Detailed design narrative (architecture, SRG allocations)
+│   ├── Traffic-engineering.md  # Colour map, policy table, binding‑SID catalogue
+│   ├── Segment-routing.md      # SRGB ranges, node SID allocations, BGP-LS setup
+│   └── Verification.md         # Ping/trace/bfd/convergence test scripts
+├── steps/                      # Ordered implementation guides
 │   ├── 01_Base_BGP.md
 │   ├── 02_SR_Enable.md
 │   ├── 03_RR_Setup.md
 │   ├── 04_Peering_Policy.md
 │   └── 05_SR_TE_Test.md
-├── topology/
+├── topology/                   # Topologies in visual .png and editable .drawio
 │   ├── project4_bgp_sr_te.drawio
 │   └── project4_bgp_sr_te.png
-└── README.md           # This file
+└── README.md                   # This file
 ```
 
 ## Prerequisites
@@ -79,6 +82,6 @@ PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 
 | Experimental File          | Description                                                           |
 |----------------------------|-----------------------------------------------------------------------|
-| 01_SRv6_DataPlane.md       | Implement 2001:db8:1000::/48 locator with SID re-advertising.         |
+| 01_SRv6_DataPlane.md       | Implement 2001:db8:face::/48 locator with SID re-advertising.         |
 | 02_Route_Scale_Testing.md  | BMP replay of 1 million+ routes into ISP1_OSLO for stress validation. |
 | 03_Telemetry_Streaming.md  | Export SR-TE stats using gNMI to InfluxDB + Grafana dashboards.       |
