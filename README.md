@@ -25,10 +25,12 @@ Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **B
   * **Customer Edges**: CUST1_OSLO, CUST2_BGO
   * **Customer Core & Server**: CUST_CORE_OSLO, CUST_SRV1
 
-### Topology
+## Network Topology
 
-[`project4_bgp_sr_te.drawio`](topology/project4_bgp_sr_te.drawio)  
-[`project4_bgp_sr_te.png`](topology/project4_bgp_te_topology.png)
+![`Network Topology`](topology/project4_bgp_te_topology.png)
+
+### Drawio Topology
+[`project4_topology.drawio`](topology/project4_bgp_sr_te.drawio)  
 
 ## Repository Structure
 
