@@ -591,138 +591,124 @@ links:
     label: CUST_CORE_OSLO-GigabitEthernet3<->CUST2_BGO-GigabitEthernet1
   - id: l3
     n1: n1
-    n2: n5
-    i1: i2
-    i2: i1
-    conditioning: {}
-    label: CUST1_OSLO-GigabitEthernet2<->ISP1_OSLO-GigabitEthernet1
-  - id: l4
-    n1: n1
     n2: n4
     i1: i3
     i2: i1
     conditioning: {}
     label: CUST1_OSLO-GigabitEthernet3<->R1_OSLO-GigabitEthernet1
-  - id: l5
-    n1: n2
-    n2: n6
-    i1: i2
-    i2: i1
-    conditioning: {}
-    label: CUST2_BGO-GigabitEthernet2<->ISP2_BGO-GigabitEthernet1
-  - id: l6
+  - id: l4
     n1: n2
     n2: n7
     i1: i3
     i2: i1
     conditioning: {}
     label: CUST2_BGO-GigabitEthernet3<->R2_BGO-GigabitEthernet1
-  - id: l7
+  - id: l5
     n1: n5
     n2: n4
     i1: i2
     i2: i2
     conditioning: {}
     label: ISP1_OSLO-GigabitEthernet2<->R1_OSLO-GigabitEthernet2
-  - id: l8
+  - id: l6
     n1: n6
     n2: n7
     i1: i2
     i2: i2
     conditioning: {}
     label: ISP2_BGO-GigabitEthernet2<->R2_BGO-GigabitEthernet2
-  - id: l9
+  - id: l7
     n1: n4
     n2: n6
     i1: i3
     i2: i3
     conditioning: {}
     label: R1_OSLO-GigabitEthernet3<->ISP2_BGO-GigabitEthernet3
-  - id: l10
+  - id: l8
     n1: n7
     n2: n5
     i1: i3
     i2: i3
     conditioning: {}
     label: R2_BGO-GigabitEthernet3<->ISP1_OSLO-GigabitEthernet3
-  - id: l11
+  - id: l9
     n1: n4
     n2: n8
     i1: i4
     i2: i1
     conditioning: {}
     label: R1_OSLO-GigabitEthernet4<->RR1_OSLO-GigabitEthernet1
-  - id: l12
+  - id: l10
     n1: n7
     n2: n9
     i1: i4
     i2: i1
     conditioning: {}
     label: R2_BGO-GigabitEthernet4<->RR2_BGO-GigabitEthernet1
-  - id: l13
+  - id: l11
     n1: n8
     n2: n10
     i1: i2
     i2: i1
     conditioning: {}
     label: RR1_OSLO-GigabitEthernet2<->CORE1_OSLO-GigabitEthernet1
-  - id: l14
+  - id: l12
     n1: n9
     n2: n11
     i1: i2
     i2: i1
     conditioning: {}
     label: RR2_BGO-GigabitEthernet2<->CORE2_BGO-GigabitEthernet1
-  - id: l15
+  - id: l13
     n1: n8
     n2: n7
     i1: i3
     i2: i5
     conditioning: {}
     label: RR1_OSLO-GigabitEthernet3<->R2_BGO-GigabitEthernet5
-  - id: l16
+  - id: l14
     n1: n9
     n2: n4
     i1: i3
     i2: i5
     conditioning: {}
     label: RR2_BGO-GigabitEthernet3<->R1_OSLO-GigabitEthernet5
-  - id: l17
+  - id: l15
     n1: n10
     n2: n9
     i1: i2
     i2: i4
     conditioning: {}
     label: CORE1_OSLO-GigabitEthernet2<->RR2_BGO-GigabitEthernet4
-  - id: l18
+  - id: l16
     n1: n11
     n2: n8
     i1: i2
     i2: i4
     conditioning: {}
     label: CORE2_BGO-GigabitEthernet2<->RR1_OSLO-GigabitEthernet4
-  - id: l19
+  - id: l17
     n1: n10
     n2: n12
     i1: i3
     i2: i1
     conditioning: {}
     label: CORE1_OSLO-GigabitEthernet3<->PEER1_OSLO-GigabitEthernet1
-  - id: l20
+  - id: l18
     n1: n11
     n2: n13
     i1: i3
     i2: i1
     conditioning: {}
     label: CORE2_BGO-GigabitEthernet3<->PEER2_BGO-GigabitEthernet1
-  - id: l21
+  - id: l19
     n1: n10
     n2: n11
     i1: i4
     i2: i4
     conditioning: {}
     label: CORE1_OSLO-GigabitEthernet4<->CORE2_BGO-GigabitEthernet4
-  - id: l22
+  - id: l20
     n1: n8
     n2: n9
     i1: i5

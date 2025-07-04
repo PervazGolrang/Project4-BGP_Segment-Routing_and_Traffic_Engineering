@@ -1,7 +1,5 @@
 # Design Document - BGP Segment Routing & Traffic Engineering
 
-## Purpose
-
 This lab demonstrates how a fictional regional ISP (AS 65001) can implement Segment Routing over MPLS (SR-MPLS), traffic engineering with deterministic forwarding, and scalable dual-site interconnectivity using Cat8000v routers. It simulates realistic ISP conditions including public peering, upstreams, and customer edge connectivity.
 
 ## High-Level Goals

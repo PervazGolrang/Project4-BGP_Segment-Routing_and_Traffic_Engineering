@@ -6,9 +6,9 @@ This repository contains a complete, dual‑site service‑provider topology imp
 
 * **BGP (IPv4 & IPv6)** - eBGP to upstreams, peers, and customers; iBGP via route reflectors
 * **Segment Routing - MPLS (SR‑MPLS)** - prefix/adjacency/peer SIDs, global SRGB 16000‑23999
-* **Segment‑Routing Traffic Engineering (SR‑TE)** - colour‑coded policies, candidate‑path preference, and on‑demand nexthop
 * **Fast convergence** - BFD at 50 ms, tuned BGP timers, and prefix‑SID based forwarding
 * **Policy control** - local‑preference, MED, AS‑path prepending, and community‑based black‑holing
+* **Segment‑Routing Traffic Engineering (SR‑TE)** - colour‑coded policies, candidate‑path preference, and on‑demand nexthop
 
 Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **Bergen**. Each PoP provides paid transit (single provider, two PoPs), public peering, and dual‑stack connectivity for a customer network that is also present in both cities.
 
@@ -25,10 +25,13 @@ Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **B
   * **Customer Edges**: CUST1_OSLO, CUST2_BGO
   * **Customer Core & Server**: CUST_CORE_OSLO, CUST_SRV1
 
-### Topology
+## Network Topology
 
-[`project4_bgp_sr_te.drawio`](topology/project4_bgp_sr_te.drawio)  
-[`project4_bgp_sr_te.png`](topology/project4_bgp_te_topology.png)
+![`Network Topology`](topology/project4_bgp_te_topology.png)
+
+### Drawio Topology
+[`project4_topology.drawio`](topology/project4_bgp_sr_te.drawio)  
+
 
 ## Repository Structure
 
@@ -40,13 +43,15 @@ PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 │   ├── Design.md               # Detailed design narrative (architecture, SRG allocations)
 │   ├── Traffic-engineering.md  # Colour map, policy table, binding‑SID catalogue
 │   ├── Segment-routing.md      # SRGB ranges, node SID allocations, BGP-LS setup
-│   └── Verification.md         # Ping/trace/bfd/convergence test scripts
+│   ├── ASN_Plan.md             # BGP ASN PLAN
+│   ├── troubleshooting.md      # Lab troubleshooting problems
+│   └── Verification.md         # Ping/trace/bfd/convergence test commands
 ├── steps/                      # Ordered implementation guides
-│   ├── 01_Base_BGP.md
+│   ├── 01_Base_BGP_and_IGP.md
 │   ├── 02_SR_Enable.md
-│   ├── 03_RR_Setup.md
-│   ├── 04_Peering_Policy.md
-│   └── 05_SR_TE_Test.md
+│   ├── 03_eBGP_Sessions.md
+│   ├── 04_BGP_Policies.md
+│   └── 05_SR_TE_Policies
 ├── topology/                   # Topologies in visual .png and editable .drawio
 │   ├── project4_bgp_sr_te.drawio
 │   └── project4_bgp_sr_te.png
@@ -55,11 +60,15 @@ PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 
 ## Prerequisites
 
-| Requirement    | Minimum                              | Notes                                 |
-| -------------- | ------------------------------------ | ------------------------------------- |
-| Hypervisor RAM | 32 GB                                | 18 routers + 1 Linux container        |
-| vCPU count     | 16                                   | Lab stable at x% CPU‑idle (Undifined) |
-| CML‑2 images   | cat8000v 17.15.01a, alpine‑linux     | EVE‑NG works equivalently             |
+| Requirement      | Minimum                              | Notes                                 |
+| ---------------- | ------------------------------------ | ------------------------------------- |
+| Hypervisor RAM   | 20 GB (with KSM)                     | 13 routers + 1 Linux container        | 
+| vCPU count       | 8                                    | Lab stable at 10% CPU‑idle            |
+| CML‑2.8.1 images | cat8000v 17.15.01a, alpine‑linux     | EVE‑NG works equivalently             |
+
+Refer to [`notes.md`](notes/notes.md) if you have KSM issues on CML.
+
+Note that KSM may require up to 15 minutes to fully complete memory de-duplication unless aggressively tuned.
 
 ## Implementation Milestones
 
@@ -78,7 +87,7 @@ PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 | 02_Communities_Blackhole.md | Injecting discard routes with communities          |
 | 03_IPv6_DualStack.md        | Dual-stack routing using iBGP/eBGP for IPv6        |
 
-## Experimental Modules (WIP)
+## Experimental Modules
 
 | Experimental File          | Description                                                           |
 |----------------------------|-----------------------------------------------------------------------|

@@ -38,26 +38,26 @@ IPv6 Loopback block can be ignored if not following `03_IPv6_DualStack.md`, it i
 
 | Link                              | Subnet           | Interface A     | Interface B     |
 | --------------------------------- | ---------------- | --------------- | --------------- |
-| R1_OSLO ↔ ISP1_OSLO               | 192.0.2.0/31     | .0 (R1)         | .1 (ISP1)       |
-| R1_OSLO ↔ ISP2_BGO                | 192.0.2.2/31     | .2 (R1)         | .3 (ISP2)       |
-| R2_BGO ↔ ISP1_OSLO                | 192.0.2.4/31     | .4 (R2)         | .5 (ISP1)       |
-| R2_BGO ↔ ISP2_BGO                 | 192.0.2.6/31     | .6 (R2)         | .7 (ISP2)       |
-| R1_OSLO ↔ RR1_OSLO                | 192.0.2.8/31     | .8 (R1)         | .9 (RR1)        |
-| R1_OSLO ↔ RR2_BGO                 | 192.0.2.10/31    | .10 (R1)        | .11 (RR2)       |
-| R2_BGO ↔ RR1_OSLO                 | 192.0.2.12/31    | .12 (R2)        | .13 (RR1)       |
-| R2_BGO ↔ RR2_BGO                  | 192.0.2.14/31    | .14 (R2)        | .15 (RR2)       |
-| RR1_OSLO ↔ CORE1_OSLO             | 192.0.2.16/31    | .16 (RR1)       | .17 (CORE1)     |
-| RR1_OSLO ↔ CORE2_BGO              | 192.0.2.18/31    | .18 (RR1)       | .19 (CORE2)     |
-| RR2_BGO ↔ CORE1_OSLO              | 192.0.2.20/31    | .20 (RR2)       | .21 (CORE1)     |
-| RR2_BGO ↔ CORE2_BGO               | 192.0.2.22/31    | .22 (RR2)       | .23 (CORE2)     |
-| RR1_OSLO ↔ RR2_BGO                | 198.0.2.24/31    | .24 (RR1)       | .25 (RR2)       |
-| CORE1_OSLO ↔ PEER1_OSLO           | 192.0.2.26/31    | .26 (CORE1)     | .27 (PEER1)     |
-| CORE2_BGO ↔ PEER2_BGO             | 192.0.2.28/31    | .28 (CORE2)     | .29 (PEER2)     |
-| CUST1_OSLO ↔ R1_OSLO              | 198.51.100.0/31  | .0 (CUST1)      | .1 (R1)         |
-| CUST1_OSLO ↔ CUST_CORE_OSLO       | 198.51.100.2/31  | .2 (CUST1)      | .3 (CUST_CORE)  |
-| CUST_CORE_OSLO ↔ CUST_SRV1        | 198.51.100.4/31  | .4 (CUST_CORE)  | .5 (SRV1)       |
-| CUST2_BGO ↔ R2_BGO                | 198.51.100.6/31  | .6 (CUST2)      | .7 (R2)         |
-| CORE1_OSLO ↔ CORE2_BGO            | 198.51.100.8/31  | .8 (CORE1)      | .9 (CORE2)      |
+| R1_OSLO ↔ ISP1_OSLO               | 192.0.2.0/31     | .0 (G2)         | .1 (G2)         |
+| R1_OSLO ↔ ISP2_BGO                | 192.0.2.2/31     | .2 (G3)         | .3 (G3)         |
+| R2_BGO ↔ ISP1_OSLO                | 192.0.2.4/31     | .4 (G3)         | .5 (G3)         |
+| R2_BGO ↔ ISP2_BGO                 | 192.0.2.6/31     | .6 (G2)         | .7 (G2)         |
+| R1_OSLO ↔ RR1_OSLO                | 192.0.2.8/31     | .8 (G4)         | .9 (G1)         |
+| R1_OSLO ↔ RR2_BGO                 | 192.0.2.10/31    | .10 (G5)        | .11 (G3)        |
+| R2_BGO ↔ RR1_OSLO                 | 192.0.2.12/31    | .12 (G5)        | .13 (G3)        |
+| R2_BGO ↔ RR2_BGO                  | 192.0.2.14/31    | .14 (G4)        | .15 (G1)        |
+| RR1_OSLO ↔ CORE1_OSLO             | 192.0.2.16/31    | .16 (G2)        | .17 (G1)        |
+| RR1_OSLO ↔ CORE2_BGO              | 192.0.2.18/31    | .18 (G4)        | .19 (G2)        |
+| RR2_BGO ↔ CORE1_OSLO              | 192.0.2.20/31    | .20 (G4)        | .21 (G2)        |
+| RR2_BGO ↔ CORE2_BGO               | 192.0.2.22/31    | .22 (G2)        | .23 (G1)        |
+| RR1_OSLO ↔ RR2_BGO                | 198.0.2.24/31    | .24 (G5)        | .25 (G5)        |
+| CORE1_OSLO ↔ PEER1_OSLO           | 192.0.2.26/31    | .26 (G3)        | .27 (G1)        |
+| CORE2_BGO ↔ PEER2_BGO             | 192.0.2.28/31    | .28 (G3)        | .29 (G1)        |
+| CUST1_OSLO ↔ R1_OSLO              | 198.51.100.0/31  | .0 (G3)         | .1 (G1)         |
+| CUST1_OSLO ↔ CUST_CORE_OSLO       | 198.51.100.2/31  | .2 (G1)         | .3 (G2)         |
+| CUST_CORE_OSLO ↔ CUST_SRV1        | 198.51.100.4/31  | .4 (G1)         | .5 (E0)         |
+| CUST2_BGO ↔ R2_BGO                | 198.51.100.6/31  | .6 (G3)         | .7 (G1)         |
+| CORE1_OSLO ↔ CORE2_BGO            | 198.51.100.8/31  | .8 (G4)         | .9 (G4)         |
 
 ---
 
