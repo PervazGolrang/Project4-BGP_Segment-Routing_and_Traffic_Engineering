@@ -32,7 +32,6 @@ Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **B
 ### Drawio Topology
 [`project4_topology.drawio`](topology/project4_bgp_sr_te.drawio)  
 
-
 ## Repository Structure
 
 ```
