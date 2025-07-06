@@ -80,14 +80,14 @@ router ospfv3 10
 
 ### 4.3 Node-SID Configuration
 
-| Device      | Interface Configuration                 |
-|-------------|-----------------------------------------|
-| R1_OSLO     | `ospf prefix-sid index 1 explicit-null` |
-| R2_BGO      | `ospf prefix-sid index 2 explicit-null` |
-| RR1_OSLO    | `ospf prefix-sid index 3 explicit-null` |
-| RR2_BGO     | `ospf prefix-sid index 4 explicit-null` |
-| CORE1_OSLO  | `ospf prefix-sid index 5 explicit-null` |
-| CORE2_BGO   | `ospf prefix-sid index 6 explicit-null` |
+| Device      | Interface Configuration                  |
+|-------------|------------------------------------------|
+| R1_OSLO     | `ospf prefix-sid index 1 explicit-null`  |
+| R2_BGO      | `ospf prefix-sid index 2 explicit-null`  |
+| RR1_OSLO    | `ospf prefix-sid index 11 explicit-null` |
+| RR2_BGO     | `ospf prefix-sid index 12 explicit-null` |
+| CORE1_OSLO  | `ospf prefix-sid index 21 explicit-null` |
+| CORE2_BGO   | `ospf prefix-sid index 22 explicit-null` |
 
 Configure prefix-SID on each device's loopback interface.
 
