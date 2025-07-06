@@ -50,19 +50,20 @@ PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 │   ├── 03_eBGP_Sessions.md
 │   ├── 04_BGP_Policies.md
 │   └── 05_SR_TE_Policies
-├── topology/                   # Topologies in visual .png and editable .drawio
-│   ├── project4_bgp_sr_te.drawio
-│   └── project4_bgp_sr_te.png
+├── topology/                   # Topologies in visual .png, .png with ASN borders, and editable .drawio
+│   ├── project4_bgp_sr_te.png
+|   ├── project4_bgp_sr_te.drawio
+│   └── project4_bgp_sr_te_with_asn_borders.png
 └── README.md                   # This file
 ```
 
 ## Prerequisites
 
-| Requirement      | Minimum                              | Notes                                 |
-| ---------------- | ------------------------------------ | ------------------------------------- |
-| Hypervisor RAM   | 20 GB (with KSM)                     | 13 routers + 1 Linux container        | 
-| vCPU count       | 8                                    | Lab stable at 10% CPU‑idle            |
-| CML‑2.8.1 images | cat8000v 17.15.01a, alpine‑linux     | EVE‑NG works equivalently             |
+| Requirement      | Minimum                              | Notes                                  |
+| ---------------- | ------------------------------------ | -------------------------------------- |
+| Hypervisor RAM   | 32 GB (with KSM)                     | 13 routers + 1 Linux container         | 
+| vCPU count       | 13                                   | Double if using 2vCPU per c8000v node  |
+| CML‑2.8.1 images | cat8000v 17.15.01a, alpine‑linux     | EVE‑NG works equivalently              |
 
 Refer to [`notes.md`](notes/notes.md) if you have KSM issues on CML.
 
@@ -90,5 +91,5 @@ Note that KSM may require up to 15 minutes to fully complete memory de-duplicati
 | Experimental File          | Description                                                           |
 |----------------------------|-----------------------------------------------------------------------|
 | 01_SRv6_DataPlane.md       | Implement 2001:db8:face::/48 locator with SID re-advertising.         |
-| 02_Route_Scale_Testing.md  | BMP replay of 1 million+ routes into ISP1_OSLO for stress validation. |
+| 02_Route_Scale_Testing.md  | BMP replay of 100k routes into ISP1_OSLO for stress validation.       |
 | 03_Telemetry_Streaming.md  | Export SR-TE stats using gNMI to InfluxDB + Grafana dashboards.       |

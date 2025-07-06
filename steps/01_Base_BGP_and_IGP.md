@@ -37,7 +37,7 @@ Upstream ISPs, peering partners, and customer edge devices are **not** configure
 
 - **Platform**: Cisco Cat8000v running IOS-XE 17.15.01a
 - **Physical Connectivity**: All core-to-core links cabled per topology diagram
-- **IP Addressing**: Point-to-point links configured per `IP_Plan.md`
+- **IP Addressing**: Point-to-point links configured per [`IP_Plan.md`](/docs/IP_Plan.md)
 - **Base Configuration**: Hostnames and loopback interfaces created on all devices
 
 ---
@@ -75,14 +75,14 @@ interface <INTERFACE_ID>
  no shutdown
 ```
 
-IPv6 configuration is in `03_IPv6_DualStack.md` under `enhancements`.
+IPv6 configuration is in [`03_IPv6_DualStack.md`](/enhancements/03_IPv6_DualStack.md).
 
 ### 4.3 OSPFv3 Process Configuration
 
 Configure OSPFv3 with dual address-family support on all core devices:
 
 ```bash
-router ospfv3 1
+router ospfv3 10
 !
  address-family ipv4 unicast
   router-id <LOOPBACK_IPv4>
@@ -113,7 +113,6 @@ mpls ldp router-id <IPv4_LOOPBACK> force
 interface <INTERFACE_ID>
  mpls ldp igp sync
  mpls ldp discovery transport-address <IPv4_LOOPBACK>           #L0 of device
-exit
 !
 mpls ldp advertise-labels
 mpls ldp explicit-null
@@ -173,22 +172,7 @@ router bgp 65001
 
 ## 5. Verification and Validation
 
-### 5.1 OSPFv3 Adjacency Verification
-
-Verify that all core devices have established FULL adjacencies:
-
-```bash
-show ospfv3 neighbor
-show ospfv3 database
-show ip route ospf
-```
-
-**Expected Results:**
-- All neighbor states should show **FULL/  -**, if shown **FULL/DR** or **FULL/BDR**, you forgot P2P.
-- OSPFv3 database should contain LSAs from all 6 core devices
-- Routing table should contain /32 routes to all loopback addresses with OSPF administrative distance
-
-### 5.2 MPLS LDP and Label Distribution Validation
+### 5.1 MPLS LDP and Label Distribution Validation
 
 Verify that MPLS forwarding entries exist for all loopback prefixes:
 
@@ -207,7 +191,7 @@ show mpls forwarding-table detail
 - Pop Label behavior for penultimate hop routers in MPLS paths
 
 
-### 5.3 MPLS Forwarding Table Validation
+### 5.2 MPLS Forwarding Table Validation
 
 Confirm that MPLS forwarding entries exist for all loopback prefixes:
 
@@ -222,7 +206,7 @@ show mpls forwarding-table detail
 - Outgoing labels showing **imp-null** for directly connected neighbors
 - Next-hop IP addresses matching P2P link addressing
 
-### 5.4 iBGP Session State Verification
+### 5.3 iBGP Session State Verification
 
 Validate BGP session establishment and route reflector functionality:
 
@@ -238,7 +222,7 @@ show bgp ipv4 unicast neighbors <neighbor-ip> received-routes
 - Clients should receive reflected routes from other RR clients
 - No BGP sessions should be in **Idle**, **Connect**, or **Active** states
 
-### 5.5 End-to-End Reachability Testing
+### 5.4 End-to-End Reachability Testing
 
 Test IP connectivity between all core device loopbacks:
 
@@ -262,10 +246,6 @@ traceroute 10.255.1.1 source 10.255.1.6
 ### BGP Session Failures
 - **Symptom**: BGP neighbors stuck in **Active** or **Connect** state
 - **Resolution**: Verify IP reachability via `ping` and confirm `update-source Loopback0` configuration
-
-### OSPF Adjacency Issues  
-- **Symptom**: Neighbor states showing **INIT** or **2WAY**
-- **Resolution**: Check interface MTU settings, area configuration, and authentication parameters
 
 ### MPLS Forwarding Gaps
 - **Symptom**: Missing LFIB entries for specific prefixes
@@ -291,16 +271,15 @@ no mpls ldp advertise-labels
 no mpls ldp explicit-null
 !
 ## Remove OSPFv3 configuration  
-no router ospfv3 1
+no router ospfv3 10
 !
 ## Remove MPLS and LDP from all interfaces
 interface <interface-id>
  no mpls ip
  no mpls ldp igp sync
  no mpls ldp discovery transport-address
- no ospfv3 1 ipv4 area 0
- no ospfv3 1 ipv6 area 0
-exit
+ no ospfv3 10 ipv4 area 0
+ no ospfv3 10 ipv6 area 0
 !
 ## Disable global MPLS
 no mpls ip

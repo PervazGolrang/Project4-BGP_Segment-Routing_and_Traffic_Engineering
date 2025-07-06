@@ -30,7 +30,7 @@ This IP-PÅlan follows a clear, structured model using /31 or /30 for point-to-p
 | CUST_CORE_OSLO  | 10.255.1.13    | 2001:db8:cust::13  | —         |
 | CUST_SRV1_OSLO  | 10.255.1.14    | 2001:db8:cust::14  | —         |
 
-IPv6 Loopback block can be ignored if not following `03_IPv6_DualStack.md`, it is only mentioned here as a visual representation.
+IPv6 Loopback block can be ignored if not following [`03_IPv6_DualStack.md`](/enhancements/03_IPv6_DualStack.md), it is only mentioned here as a visual representation.
 
 ---
 
@@ -65,5 +65,5 @@ IPv6 Loopback block can be ignored if not following `03_IPv6_DualStack.md`, it i
 
 * All loopbacks are /32 (IPv4) and /128 (IPv6)
 * All P2P links use /31 where supported
-* Global SRGB range is 16000–23999; node SID = base + router ID (e.g. R1 = 16001)
-* IPv6 can be dual-stack enabled later via `03_IPv6_DualStack.md`
+* Global SRGB range is 16000–23999; node SID = base + router ID
+* IPv6 can be dual-stack enabled later via [`03_IPv6_DualStack.md`](/enhancements/03_IPv6_DualStack.md)

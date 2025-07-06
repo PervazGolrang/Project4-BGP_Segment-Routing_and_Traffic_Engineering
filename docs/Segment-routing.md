@@ -11,18 +11,19 @@ This document **only** captures the Segment‑Routing (SR‑MPLS) information fo
 | **SRGB**   | 16000 – 23999      |
 | Data‑plane | MPLS (PHP enabled) |
 
+This lab uses an SRGB base label of `16000`.
 ---
 
 ## Node (Prefix) SIDs
 
-| Device         | Loopback0  | SID Index     | Node SID (Label) |
-| -------------- | ---------- | ------------- | ---------------- |
-| **R1_OSLO**    | 10.255.1.1 | 16001         | 16001            |
-| **R2_BGO**     | 10.255.1.2 | 16002         | 16002            |
-| **RR1_OSLO**   | 10.255.1.3 | 16011         | 16011            |
-| **RR2_BGO**    | 10.255.1.4 | 16012         | 16012            |
-| **CORE1_OSLO** | 10.255.1.5 | 16021         | 16021            |
-| **CORE2_BGO**  | 10.255.1.6 | 16022         | 16022            |
+| Device         | Loopback0  | SID Index   | Node SID (Label) |
+| -------------- | ---------- | ----------- | ---------------- |
+| **R1_OSLO**    | 10.255.1.1 | 1           | 16001            |
+| **R2_BGO**     | 10.255.1.2 | 2           | 16002            |
+| **RR1_OSLO**   | 10.255.1.3 | 11          | 16011            |
+| **RR2_BGO**    | 10.255.1.4 | 12          | 16012            |
+| **CORE1_OSLO** | 10.255.1.5 | 21          | 16021            |
+| **CORE2_BGO**  | 10.255.1.6 | 22          | 16022            |
 
 Only these **six routers** participate in SR‑MPLS. The reason for this design choice is to keep the SR domain internal to the backbone infrastructure while excluding customer-facing, ISP, and peer routers from segment routing operations.
 

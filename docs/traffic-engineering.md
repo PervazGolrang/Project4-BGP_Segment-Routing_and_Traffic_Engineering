@@ -25,11 +25,11 @@ This document defines the Segment Routing Traffic Engineering (SR-TE) policy cat
 | ----------------- | ----- | ----------- | ------ | -------------------------- |
 | TE_CORE_LOWLAT    | 100   | R1_OSLO     | 16001  | Preferred for core traffic |
 | TE_BACKUP_ISP     | 200   | R1_OSLO     | 16002  | Activated on loss of ISP1  |
-| TE_CUST1_POLICY   | 300   | CUST1_OSLO  | 16003  | Customer-specific handling |
+| TE_CUST1_POLICY   | 300   | CUST1_OSLO  | 16021  | Customer-specific handling |
 
 ---
 
-## Policy SID Lists
+## Policy SID Lists - WIP
 
 ### TE_CORE_LOWLAT (Color 100)
 
@@ -48,7 +48,7 @@ Preference: 100
 ### TE_CUST1_POLICY (Color 300)
 
 ```bash
-Segment List: [CUST_CORE_OSLO (Adj-SID), CORE1_OSLO (Prefix-SID)]
+Segment List: [CUST_CORE_OSLO (Prefix-SID), CORE1_OSLO (Prefix-SID)]
 Preference: 150
 ```
 
@@ -59,8 +59,8 @@ Preference: 150
 * All policies use **dynamic candidate-paths** unless otherwise defined.
 * BGP-LS is assumed to be distributing SIDs and topology.
 * Policy activation is monitored using
-```markdown
-    `show segment-routing traffic-eng policy` - Policy status and activaton
-    `show segment-routing traffic-eng tunnels`- Tunnel state and path information
-    `show segment-routing mpls interfaces`    - Interface-level SR-MPLS information
+```bash
+    `show segment-routing traffic-eng policy`       - Policy status and activaton
+    `show segment-routing traffic-eng tunnels`      - Tunnel state and path information
+    `show segment-routing mpls interfaces`          - Interface-level SR-MPLS information
 ```

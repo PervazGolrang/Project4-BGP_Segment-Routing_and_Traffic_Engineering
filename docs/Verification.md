@@ -6,7 +6,7 @@ This document describes the testing and verification procedures for the Segment 
 
 ## 1. Node SID Reachability
 
-Verify that each Node‑SID (refer `IP_plan.md`) is in the label table and can be pinged via MPLS.
+Verify that each Node‑SID (refer to [`IP_plan.md`](/docs/IP_Plan.md)) is in the label table and can be pinged via MPLS.
 
 ```bash
 show mpls forwarding-table | include 160
@@ -23,7 +23,7 @@ ping mpls ipv4 16022 repeat 3   # CORE2_BGO
 
 ## 2. OSPF Adjacency & Loopback Reachability
 
-Verify OSPF (refer `IP_plan.md`) is up, and every Loopback0 (/32) is reachable.
+Verify OSPF (refer to [`IP_plan.md`](/docs/IP_Plan.md)) is up, and every Loopback0 (/32) is reachable.
 
 ```bash
 show ip ospf neighbor
@@ -37,7 +37,7 @@ ping 10.255.1.5 repeat 3    # CORE1_OSLO
 ping 10.255.1.6 repeat 3    # CORE2_BGO
 ```
 
-Verify IPv6 (if `enhancements/03_IPv6_DualStack.md` is deployed):
+Verify IPv6 (if [`enhancements/03_IPv6_DualStack.md`](/enhancements/03_IPv6_DualStack.md) is deployed):
 
 ```bash
 show ospfv3 neighbor
@@ -63,7 +63,8 @@ show segment-routing traffic-eng policy name TE_CORE_LOWLAT detail
 
 Check:
 * `Operational State : up`
-* Candidate-path preference and SID-list should match `traffic-engineering.md`
+* SID-list should match [`Segment-routing.md`](/docs/Segment-routing.md)
+* Candidate-path preference should match [`traffic-engineering.md`](/docs/traffic-engineering.md)
 
 ---
 
@@ -78,19 +79,7 @@ show mpls forwarding-table | include BSID
 
 ---
 
-## 5. Adjacency SID Resolution
-
-Confirm the correct label allocation on the Adj-SIDs.
-
-```bash
-show ip ospf segment-routing adjacency-sid
-```
-
-The expected label values should surpass 24000 (outside SRGB).
-
----
-
-## 6. MPLS Traceroute (Path Trace)
+## 5. MPLS Traceroute
 
 Validate by using MPLS-aware traceroute to verify path steering.
 
@@ -104,7 +93,7 @@ The output should display the SID stack that matches the TE policy’s SID‑lis
 
 ---
 
-## 7. BFD
+## 6. BFD
 
 BFD should be `Up` for every protected link.
 
@@ -114,7 +103,7 @@ show bfd neighbors brief
 
 ---
 
-## 8. Streaming Telemetry
+## 7. Streaming Telemetry (Experiments)
 
 Verify export of SR-TE counters:
 
