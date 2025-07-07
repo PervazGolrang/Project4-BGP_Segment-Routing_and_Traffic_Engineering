@@ -1,4 +1,4 @@
-# Step 02 – Segment Routing MPLS Enablement
+# Step 02 - Segment-Routing MPLS
 
 This step activates Segment Routing over MPLS (SR-MPLS) on all core network devices within AS 65001. SR-MPLS provides the foundation for traffic engineering by enabling prefix-based forwarding with globally significant labels and supporting explicit path control through segment lists.
 
