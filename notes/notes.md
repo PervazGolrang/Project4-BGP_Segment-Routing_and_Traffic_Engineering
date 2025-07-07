@@ -11,3 +11,5 @@ WIP - slett etterpå
 - Lese litt mer innom TE, fjernet Adj-SID. Sjeldent brukt irl
 
 - Bruk wireshark og gi delta svar for latency forskjell (kan føre til ekstra delta delay pga ssd/cpu) -> vis wireshark
+
+- fjern Session Type	fra step03, unyttig
