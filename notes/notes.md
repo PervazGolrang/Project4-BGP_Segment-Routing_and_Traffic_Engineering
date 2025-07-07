@@ -13,3 +13,5 @@ WIP - slett etterpå
 - Bruk wireshark og gi delta svar for latency forskjell (kan føre til ekstra delta delay pga ssd/cpu) -> vis wireshark
 
 - fjern Session Type	fra step03, unyttig
+
+- Network Topology with ASN borders bruker ikke dashed borders
