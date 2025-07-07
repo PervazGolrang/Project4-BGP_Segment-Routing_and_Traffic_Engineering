@@ -29,7 +29,7 @@ Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **B
 ![`Network Topology`](topology/project4_bgp_sr_te.png)
 
 ### Network Topology with ASN borders
-[`Network Topology`](topology/project4_bgp_sr_te_with_asn_borders.png)
+[`Network Topology with ASN borders`](topology/project4_bgp_sr_te_with_asn_borders.png)
 
 ### Drawio Topology
 [`project4_topology.drawio`](topology/project4_bgp_sr_te.drawio)  
