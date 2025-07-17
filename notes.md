@@ -26,9 +26,9 @@ end
 Do note that you do not need to reload, as when CML starts a node, it's essentially a fresh boot. Also, due to a bug that Cisco is continuing to neglect for half-a-decade, if you write `show license summary`, it will show that no license is active. The license is active, you can confirm by activating mpls. A non-activated license would display an error that `mpls ...` is an invalid command.
 
 ### CML Performance Tuning
-To reduce memory by utilizing deduplication, EVE-NG by default, comes with UKSM, however, CML does not have UKSM or KSM installed by default. Installing and configuring UKSM is far too complex, however, to install and enable KSM is much simpler.
+To reduce memory by utilizing deduplication, EVE-NG by default, comes with UKSM, however, CML does not have UKSM or KSM installed by default. Installing and configuring UKSM is far too complex, however, to install and enable KSM is much simpler:
 
-Install the KSM Tuned daemon
+Install the KSM Tuned daemon:
 ```bash
 sudo apt update
 sudo apt install ksmtuned
@@ -42,7 +42,7 @@ sudo nano /etc/ksmtuned.conf
 Change/add these settings for aggressiv deduplication:
 ```bash
 KSM_MONITOR_INTERVAL=20         # How often in seconds KSM runs a check, default is 60s (too long)
-KSM_SLEEP_MSEC=10               # Sleep between scan, default is 20ms (bit convervative)
+KSM_SLEEP_MSEC=10               # Sleep between scan, default is 20ms (a bit conservative)
 KSM_NPAGES_MAX=3000             # Maximum pages to scan, default 1250 is a bit low
 KSM_THRES_COEF=70               # Activates KSM at 30% RAM usage, default is 20 (far too late)
 ```
@@ -113,20 +113,17 @@ Originally I tried to implement complex telemetry streaming for Step 05 using:
 - gRPC protocol
 - Google Protocol Buffers
 
-Caused too many failures and compelxities, and this felt like studying for the CCNP SP, which was outside the lab scope. I've simplified it to basic policy monitoring instead.
+Caused too many failures and complexities, and this felt like studying for the CCNP SP, which was outside the lab scope. I've simplified it to basic policy monitoring instead.
 
 ---
 
 ## Network Design Decisions
 
-### Traffic Engineering Approach
 Removed complex telemetry and focused on basic SR-TE policies that demonstrate the concepts without getting lost in vendor-specific monitoring implementations.
 
 ---
 
-## Performance Testing Notes
-
-### Wireshark Analysis
+## Wireshark Analysis
 Compared to my previous projects, this one I planned to use Wireshark to measure actual latency differences and packets between:
 - IGP shortest path routing
 - SR-TE premium paths (Color 100)
@@ -147,5 +144,3 @@ This lab pushed me way beyond basic BGP configuration into real Service Provider
 This made me appreciate the depth of SP networking. While challenging, the hands-on experience with these technologies provided insights you can't get from just reading documentation, or passing some exam.
 
 The multiple configuration iterations and troubleshooting sessions were frustrating but ultimately valuable for understanding how these protocols actually work together in practice.
-
-For future projects, especially in CCNP Ent, it would be best to avoid CCNP SP material, and focus on creating labs of NETCONF/RESTCONF, manual updating via file transfer, and VPN technologies.

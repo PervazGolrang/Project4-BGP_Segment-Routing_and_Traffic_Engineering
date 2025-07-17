@@ -5,7 +5,7 @@ This repository contains a realistic dual‑site service‑provider topology imp
 ---
 
 ## What This Lab Does
-I built a regional ISP (AS 65001) operating two Points of Presence (PoPs): **Oslo** and **Bergen**, to learn how real service providers work. Each PoP provides paid transit, public peering, and dual‑stack connectivity for a customer network that is also present in both cities. The lab covers:
+This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs): **Oslo** and **Bergen**, to learn how real service providers work. Each PoP provides paid transit, public peering, and dual‑stack connectivity for a customer network that is also present in both cities. The lab covers:
 
 - **BGP route reflection** - scaling iBGP without full mesh
 - **Segment Routing MPLS** - modern traffic engineering
