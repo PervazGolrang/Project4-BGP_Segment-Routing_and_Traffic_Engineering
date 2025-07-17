@@ -1,8 +1,6 @@
 # ASN Plan
 
-This document outlines the Autonomous System Number (ASN) assignments for the BGP Segment Routing and Traffic Engineering lab topology.
-
-The lab simulates a regional service provider (AS 65001) operating in two Points of Presence (PoPs): Oslo and Bergen. The ISP provides transit services to customers, purchases upstream connectivity, and participates in settlement-free peering arrangements.
+This document outlines the Autonomous System Number (ASN) assignments for the BGP Segment Routing and Traffic Engineering lab topology. The lab simulates a regional service provider (AS 65001) operating in two Points of Presence (PoPs): Oslo and Bergen. The ISP provides transit services to customers, purchases upstream connectivity, and participates in settlement-free peering arrangements.
 
 ---
 
@@ -90,13 +88,4 @@ All internal routers participate in iBGP using route reflector hierarchy:
 **From Peers (AS 65010, AS 65011):**
 - Accept peer + peer's customer routes
 - Reject routes with own ASN in path
-- Apply strict prefix filtering
-
----
-
-## Notes
-
-- All ASNs use private range (64512-65534) suitable for lab environments
-- iBGP uses route reflectors to avoid full mesh complexity
-- BGP-LS (Link State) distribution enables SR-TE path computation
-- Communities and route-maps provide granular policy control
+- Apply strict prefix filtering 

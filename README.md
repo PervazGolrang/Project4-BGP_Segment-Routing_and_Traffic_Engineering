@@ -1,98 +1,86 @@
-# Project 4 - BGP Segment‑Routing & Traffic Engineering
+# Project 4 - Segment Routing & Traffic Engineering
 
-## Overview
+This repository contains a realistic dual‑site service‑provider topology implemented entirely with **Cat8000v 17.15.01a** images, using Segment Routing MPLS and traffic engineering on CML-2.8.1. The environment demonstrates how a regional ISP (AS 65001) can deliver deterministic traffic engineering, rapid fail‑over, and cost‑optimised peering.
 
-This repository contains a complete, dual‑site service‑provider topology implemented entirely with **Cat8000v 17.15.01a** images. The environment demonstrates how a regional ISP (AS 65001) can deliver deterministic traffic engineering, rapid fail‑over, and cost‑optimised peering by combining:
+---
 
-* **BGP (IPv4 & IPv6)** - eBGP to upstreams, peers, and customers; iBGP via route reflectors
-* **Segment Routing - MPLS (SR‑MPLS)** - prefix/adjacency/peer SIDs, global SRGB 16000‑23999
-* **Fast convergence** - BFD at 50 ms, tuned BGP timers, and prefix‑SID based forwarding
-* **Policy control** - local‑preference, MED, AS‑path prepending, and community‑based black‑holing
-* **Segment‑Routing Traffic Engineering (SR‑TE)** - colour‑coded policies, candidate‑path preference, and on‑demand nexthop
+## What This Lab Does
+I built a regional ISP (AS 65001) operating two Points of Presence (PoPs): **Oslo** and **Bergen**, to learn how real service providers work. Each PoP provides paid transit, public peering, and dual‑stack connectivity for a customer network that is also present in both cities. The lab covers:
 
-Geographically, the ISP operates two Points of Presence (PoPs): **Oslo** and **Bergen**. Each PoP provides paid transit (single provider, two PoPs), public peering, and dual‑stack connectivity for a customer network that is also present in both cities.
+- **BGP route reflection** - scaling iBGP without full mesh
+- **Segment Routing MPLS** - modern traffic engineering
+- **Business relationships** - upstream transit, public peering, customer services
+- **Traffic policies** - communities, local preference, prefix filtering
+- **Explicit path control** - SR-TE policies for deterministic routing
+
+---
 
 ## Topology Highlights
 
-* **Nodes**: 13 Cat8000v routers + 1 TinyCore‑Linux server (for reachability tests)
-* **Logical roles**:
+13 Cat8000v routers simulating realistic ISP operations:
 
-  * **EDGE routers**: R1_OSLO, R2_BGO
-  * **Route‑Reflectors**: RR1_OSLO, RR2_BGO
-  * **Core**: CORE1_OSLO, CORE2_BGO
-  * **Upstreams**: ISP1_OSLO, ISP1_BGO (same ASN, different PoPs)
-  * **Public Peers**: PEER1_OSLO, PEER2_BGO
-  * **Customer Edges**: CUST1_OSLO, CUST2_BGO
-  * **Customer Core & Server**: CUST_CORE_OSLO, CUST_SRV1
+- **Oslo site:** R1_OSLO, RR1_OSLO, CORE1_OSLO + upstream/peer/customer connections
+- **Bergen site:** R2_BGO, RR2_BGO, CORE2_BGO + upstream/peer/customer connections
+- **External networks:** 2 upstream ISPs, 2 public peers, multi-site customer
+
+---
 
 ## Network Topology
-![`Network Topology`](topology/project4_bgp_sr_te.png)
-
-### Network Topology with ASN borders
-[`Network Topology with ASN borders`](topology/project4_bgp_sr_te_with_asn_borders.png)
+![`Network Topology with ASN borders`](topology/project4_bgp_sr_te.png)
 
 ### Drawio Topology
 [`project4_topology.drawio`](topology/project4_bgp_sr_te.drawio)  
 
-## Repository Structure
+---
+
+## Lab Requirements
+
+| Component   | Requirement            | Notes                                 |
+| ----------- | ---------------------- | ------------------------------------- |
+| RAM         | 24GB+ with KSM         | 13 routers, ~4GB each                 |
+| vCPU        | 13+ vCPUs              | 1 per router minimum, 2 recommended   |
+| Platform    | CML-2.8.1 or EVE-NG    | Cat8000v 17.15.01a image              |
+
+Refer to [`notes.md`](/notes.md) to tune and enable KSM on CML. Do note it would take up to 15 minutes to fully complete the memory de-duplication.
+
+---
+
+## File Structure
 
 ```
-PROJECT4-BGP_SEGMENT-ROUTING_AND_TRAFFIC_ENGINEERING/
 ├── configs/                    # Device‑specific startup‑configs (.yaml)
-├── docs/
-│   ├── IP_Plan.md              # All /30 links and loopback /32s
-│   ├── Design.md               # Detailed design narrative (architecture, SRG allocations)
-│   ├── Traffic-engineering.md  # Colour map, policy table, binding‑SID catalogue
-│   ├── Segment-routing.md      # SRGB ranges, node SID allocations, BGP-LS setup
-│   ├── ASN_Plan.md             # BGP ASN PLAN
-│   ├── troubleshooting.md      # Lab troubleshooting problems
-│   └── Verification.md         # Ping/trace/bfd/convergence test commands
-├── steps/                      # Ordered implementation guides
+├── docs/                       # Network design documentation
+│   ├── IP_Plan.md              
+│   ├── Design.md               
+│   ├── Traffic-engineering.md  
+│   ├── Segment-routing.md      
+│   └── ASN_Plan.md                             
+├── steps/                      # Step-by-step implementation guides
 │   ├── 01_Base_BGP_and_IGP.md
 │   ├── 02_SR_Enable.md
 │   ├── 03_eBGP_Sessions.md
 │   ├── 04_BGP_Policies.md
 │   └── 05_SR_TE_Policies
-├── topology/                   # Topologies in visual .png, .png with ASN borders, and editable .drawio
-│   ├── project4_bgp_sr_te.png
-|   ├── project4_bgp_sr_te.drawio
-│   └── project4_bgp_sr_te_with_asn_borders.png
-└── README.md                   # This file
+├── topology/                   # Network diagrams (.png, .drawio)
+├── wireshark/                  # Wireshark packet capture
+├── IPv6_DualStack.md           # Optional IPv6 enhancement
+└── notes.md                    # Lab journal and troubleshooting    
 ```
 
-## Prerequisites
+## Implementation Steps
 
-| Requirement      | Minimum                              | Notes                                  |
-| ---------------- | ------------------------------------ | -------------------------------------- |
-| Hypervisor RAM   | 32 GB (with KSM)                     | 13 routers + 1 Linux container         | 
-| vCPU count       | 13                                   | Double if using 2vCPU per c8000v node  |
-| CML‑2.8.1 images | cat8000v 17.15.01a, alpine‑linux     | EVE‑NG works equivalently              |
+**Step 1:** IGP foundation and iBGP route reflectors  
+**Step 2:** Enabling SR-MPLS with node-SIDs  
+**Step 3:** External BGP sessions (upstream, peers, customers)  
+**Step 4:** BGP policies and community frameworks  
+**Step 5:** SR-TE policies for traffic engineering
 
-Refer to [`notes.md`](notes/notes.md) if you have KSM issues on CML.
+Each step builds on the previous one.
 
-Note that KSM may require up to 15 minutes to fully complete memory de-duplication unless aggressively tuned.
+---
 
-## Implementation Milestones
+## Notes
 
-1. **Base BGP & iBGP** - edges peer with RRs; core learns internal routes.
-2. **Enable SR‑MPLS** - configure SRGB 16000‑23999, advertise prefix‑SIDs, enable adjacency‑SIDs.
-3. **Public Peering & Policy** - inbound / outbound filtering, ORF, NO_EXPORT, MED.
-4. **Traffic Engineering** - build colour 100 (Premium) and colour 200 (Default) SR‑TE policies
-5. **Fast Failover** - apply BFD at 50 ms on transit links; verify sub‑second convergence.
-6. **Blackhole Scenario** - tag /32 host route with community `blackhole:666`; ensure upstream discards it.
+This lab pushed me way beyond basic networking into real Service Provider territory. The complexity of integrating BGP policies, Segment Routing, and traffic engineering took multiple attempts to get right. Lab journal, troubleshooting, and implementation challenges can be viewed at [`notes.md`](/notes.md).
 
-## Enhancements
-
-| Enhancement File            | Description                                        |
-|-----------------------------|----------------------------------------------------|
-| 01_BGP_Failover.md          | BFD and BGP convergence tuning                     |
-| 02_Communities_Blackhole.md | Injecting discard routes with communities          |
-| 03_IPv6_DualStack.md        | Dual-stack routing using iBGP/eBGP for IPv6        |
-
-## Experimental Modules
-
-| Experimental File          | Description                                                           |
-|----------------------------|-----------------------------------------------------------------------|
-| 01_SRv6_DataPlane.md       | Implement 2001:db8:face::/48 locator with SID re-advertising.         |
-| 02_Route_Scale_Testing.md  | BMP replay of 100k routes into ISP1_OSLO for stress validation.       |
-| 03_Telemetry_Streaming.md  | Export SR-TE stats using gNMI to InfluxDB + Grafana dashboards.       |
+The goal of this lab was to understand how modern ISPs work, while challenging myself with BGP Segmented Routing and Traffic Engineering.

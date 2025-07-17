@@ -12,6 +12,7 @@ This document **only** captures the Segment‑Routing (SR‑MPLS) information fo
 | Data‑plane | MPLS (PHP enabled) |
 
 This lab uses an SRGB base label of `16000`.
+
 ---
 
 ## Node (Prefix) SIDs

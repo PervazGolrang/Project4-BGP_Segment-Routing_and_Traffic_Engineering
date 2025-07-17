@@ -2,6 +2,8 @@
 
 This lab demonstrates how a fictional regional ISP (AS 65001) can implement Segment Routing over MPLS (SR-MPLS), traffic engineering with deterministic forwarding, and scalable dual-site interconnectivity using Cat8000v routers. It simulates realistic ISP conditions including public peering, upstreams, and customer edge connectivity.
 
+---
+
 ## High-Level Goals
 
 * Implement scalable BGP-based ISP design with route reflection
@@ -9,6 +11,8 @@ This lab demonstrates how a fictional regional ISP (AS 65001) can implement Segm
 * Perform deterministic path control with SR-TE
 * Introduce realistic peering, customer, and upstream relationships
 * Test BGP convergence and policy behavior
+
+---
 
 ## Sites
 
@@ -24,6 +28,8 @@ The lab is split into two primary PoPs:
   * Devices: R2_BGO, RR2_BGO, CORE2_BGO, ISP2_BGO, PEER2_BGO
   * Customers: CUST2_BGO
 
+---
+
 ## Role Breakdown
 
 | Role             | Device(s)             | Function                                               |
@@ -37,6 +43,8 @@ The lab is split into two primary PoPs:
 | Customer Core    | CUST_CORE_OSLO        | Mid-layer for internal redistribution at customer site |
 | Customer Server  | CUST_SRV1             | TinyCore Linux node for pings and BGP verification     |
 
+---
+
 ## BGP Design
 
 * **ASN 65001**: Regional ISP ASN
@@ -46,6 +54,8 @@ The lab is split into two primary PoPs:
   * Customers CUST1/2 use eBGP with private ASNs (e.g. 65010, 65020)
   * PEER1/2 use eBGP with non-transitive sharing (no transit)
 
+---
+
 ## Segment Routing (SR-MPLS)
 
 * **Global SRGB**: 16000–23999
@@ -54,6 +64,8 @@ The lab is split into two primary PoPs:
 * **Peer SIDs**: For egress SR policy-based steering
 * **SID advertisement**: via BGP-LS or SR Extensions to BGP
 
+---
+
 ## SR Traffic Engineering (SR-TE)
 
 * Explicit paths built using:
@@ -61,6 +73,8 @@ The lab is split into two primary PoPs:
   * Prefix-SID stacks (e.g. R1 -> R2 -> ISP2)
   * Preference/candidate-path selection
 * Used for backup path control and latency-aware path steering
+
+---
 
 ## Policy & Failover
 
@@ -76,6 +90,8 @@ The lab is split into two primary PoPs:
   * BFD enabled on core and edge router adjacencies
   * Static backup SR-TE policies (fallback)
 
+---
+
 ## Simplifications and Assumptions
 
 * No IGP (OSPF/IS-IS) - BGP used for all routing
@@ -85,17 +101,9 @@ The lab is split into two primary PoPs:
 * Delay and jitter models not used - CML lab is idealized
 * Full-mesh peering between edge, core, and RRs is reflected through BGP RR hierarchy
 
+---
+
 ## Why Cat8000v Only?
 
-* Cat8000v supports modern SR features (SR-MPLS, SR-TE, BFD, gNMI) compared to CSR1000v
+* Cat8000v supports modern SR features (SR-MPLS, SR-TE, BFD) compared to CSR1000v
 * Uniformity across devices avoids feature mismatch and simplifies validation
-* High configurability under CML 2.8.1 with low footprint (compared to NCS or ASR images)
-
-## Testing Goals
-
-* Measure path convergence and prefix propagation under failure
-* Verify traffic steering through SR-TE policy injection
-* Observe control-plane changes via 
-  `show bgp`, 
-  `show segment-routing`, 
-  `show bfd`

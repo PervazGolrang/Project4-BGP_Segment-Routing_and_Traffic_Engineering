@@ -1,4 +1,4 @@
-# Step 02 - Segment-Routing MPLS
+# Step 02 - Segment Routing MPLS
 
 This step activates Segment Routing over MPLS (SR-MPLS) on all core network devices within AS 65001. SR-MPLS provides the foundation for traffic engineering by enabling prefix-based forwarding with globally significant labels and supporting explicit path control through segment lists.
 
@@ -8,54 +8,37 @@ This step activates Segment Routing over MPLS (SR-MPLS) on all core network devi
 
 This phase implements Segment Routing capabilities on the existing MPLS infrastructure:
 
-1. **Global SRGB Configuration**: Establish Segment Routing Global Block (16000-23999) across all core devices
-2. **Node-SID Advertisement**: Configure prefix-SIDs for each loopback to enable source routing
-3. **SR-MPLS Forwarding**: Populate MPLS tables with segment routing labels for path computation
+1. **Global SRGB Configuration:** Establish Segment Routing Global Block (16000-23999) across all core devices
+2. **Node-SID Advertisement:** Configure prefix-SIDs for each loopback to enable source routing
+3. **SR-MPLS Forwarding:** Populate MPLS tables with segment routing labels for path computation
 
----
+## SR-MPLS Enabled Devices
 
-## 2. Network Scope
-
-### SR-MPLS Enabled Devices
-
-| Device         | Role            | SID Index   | Node SID (Label) | SRGB Range    |
+| Device         | Role            | SID Index   | Node SID (Label) | SRGB Range    |
 | -------------- | --------------- | ----------- | ---------------- |---------------|
-| **R1_OSLO**    | Provider Edge   | 1           | 16001            | 16000-23999   |
-| **R2_BGO**     | Provider Edge   | 2           | 16002            | 16000-23999   |
-| **RR1_OSLO**   | Route Reflector | 11          | 16011            | 16000-23999   |
-| **RR2_BGO**    | Route Reflector | 12          | 16012            | 16000-23999   |
-| **CORE1_OSLO** | Core Transit    | 21          | 16021            | 16000-23999   |
-| **CORE2_BGO**  | Core Transit    | 22          | 16022            | 16000-23999   |
+| R1_OSLO        | Provider Edge   | 1           | 16001            | 16000-23999   |
+| R2_BGO         | Provider Edge   | 2           | 16002            | 16000-23999   |
+| RR1_OSLO       | Route Reflector | 11          | 16011            | 16000-23999   |
+| RR2_BGO        | Route Reflector | 12          | 16012            | 16000-23999   |
+| CORE1_OSLO     | Core Transit    | 21          | 16021            | 16000-23999   |
+| CORE2_BGO      | Core Transit    | 22          | 16022            | 16000-23999   |
 
-### Excluded Devices
-Upstream ISPs, peering partners, and customer networks do **not** participate in SR-MPLS. They will receive standard BGP routing without segment routing extensions.
-
----
-
-## 3. Prerequisites
-
-- **Step 01 Complete**: OSPFv3, LDP, and iBGP sessions established and operational
-- **MPLS Foundation**: All core interfaces have `mpls ip` enabled
-- **Loopback Reachability**: All /32 loopback prefixes reachable via IGP
-- **Label Distribution**: LDP operational with implicit-null and PHP behaviors
+Upstream ISPs, peering partners, and customer networks do not participate in SR-MPLS. They will receive standard BGP routing without segment routing extensions.
 
 ---
 
-## 4. Implementation Procedure
+## 2. Implementation
 
-### 4.1 Global Segment Routing Configuration
+### 2.1 Global Segment Routing Configuration
 
-Enable SR-MPLS globally on all core devices.
+Enable SR-MPLS globally on all core devices:
 
 ```bash
-# Global SR-MPLS activation
 segment-routing mpls
 !
-# Configure global SRGB range
 segment-routing mpls
  global-block 16000 23999
 !
-# Enable connected prefix-SID advertisement
 segment-routing mpls
  connected-prefix-sid-map
   address-family ipv4
@@ -67,9 +50,11 @@ segment-routing mpls
    10.255.1.6/32 index 22
 ```
 
-### 4.2 OSPFv3 Segment Routing Extensions
+### 2.2 OSPFv3 Segment Routing Extensions
 
-Enable SR extensions in OSPFv3 for prefix-SID advertisement.
+Enable SR extensions in OSPFv3 for prefix-SID advertisement. 
+Note that the process number should match [`Step 01`](/steps/01_Base_BGP_and_IGP.md) configuration:
+
 
 ```bash
 router ospfv3 10
@@ -78,33 +63,32 @@ router ospfv3 10
   area 0 segment-routing mpls
 ```
 
-### 4.3 Node-SID Configuration
+### 2.3 Node-SID Configuration
 
-| Device      | Interface Configuration                  |
-|-------------|------------------------------------------|
-| R1_OSLO     | `ospf prefix-sid index 1 explicit-null`  |
-| R2_BGO      | `ospf prefix-sid index 2 explicit-null`  |
-| RR1_OSLO    | `ospf prefix-sid index 11 explicit-null` |
-| RR2_BGO     | `ospf prefix-sid index 12 explicit-null` |
-| CORE1_OSLO  | `ospf prefix-sid index 21 explicit-null` |
-| CORE2_BGO   | `ospf prefix-sid index 22 explicit-null` |
+Configure prefix-SID on each device's loopback interface. The explicit-null option preserves QoS markings (MPLS EXP bits) and TTL all the way to the egress router, preventing loss of MPLS metadata that would occur with implicit-null.
 
-Configure prefix-SID on each device's loopback interface.
+
+| Device      | Interface Configuration                    |
+|-------------|--------------------------------------------|
+| R1_OSLO     | `ospfv3 prefix-sid index 1 explicit-null`  |
+| R2_BGO      | `ospfv3 prefix-sid index 2 explicit-null`  |
+| RR1_OSLO    | `ospfv3 prefix-sid index 11 explicit-null` |
+| RR2_BGO     | `ospfv3 prefix-sid index 12 explicit-null` |
+| CORE1_OSLO  | `ospfv3 prefix-sid index 21 explicit-null` |
+| CORE2_BGO   | `ospfv3 prefix-sid index 22 explicit-null` |
+
+Apply to Loopback0 on each device:
 
 ```bash
- interface Loopback0
- ospfv3 prefix-sid index [index] explicit-null
+interface Loopback0
+ ospfv3 prefix-sid index <index> explicit-null
 ```
-
-Change index with the correct SID Index
-
-The reason for using `explicit-null` is to preserve QoS markings (MPLS EXP bits) and TTL all the way to the egress router. If `implicit-null` is continued to be used, the final MPLS label is removed one hop early, and the packet arrives as label 0, losing MPLS metadata.
 
 ---
 
-## 5. Verification and Validation
+## 3.0 Verification and Validation
 
-### 5.1 Segment Routing Global Configuration
+### 3.1 Segment Routing Global Configuration
 
 Verify SR-MPLS global state and SRGB allocation:
 
@@ -114,12 +98,9 @@ show segment-routing mpls gb
 show segment-routing mpls mapping-server
 ```
 
-**Expected Results:**
-- SR-MPLS state shows **Enabled**
-- SRGB range displays **16000-23999**
-- No mapping-server conflicts or errors
+SR-MPLS state should show `Enabled`, SRGB range should display `16000-23999`, and there shouldn't be any mapping-server conflicts or errors.
 
-### 5.2 OSPFv3 Segment Routing Database
+### 3.2 OSPFv3 Segment Routing Database
 
 Confirm prefix-SID advertisement in OSPF topology database:
 
@@ -129,12 +110,9 @@ show ospfv3 database prefix
 show ospfv3 database segment-routing
 ```
 
-**Expected Results:**
-- Prefix LSAs contain **SID Index** fields for all loopbacks
-- SID Index values match configuration (1-6)
-- **M-bit** and **NP-bit** properly set in prefix-SID sub-TLVs
+Prefix LSAs should contain SID Index fields for all loopbacks. SID Index values should match configuration (1, 2, 11, 12, 21, 22) with M-bit and NP-bit properly set in prefix-SID sub-TLVs.
 
-### 5.3 MPLS Forwarding Table with SR Labels
+### 3.3 MPLS Forwarding Table with SR Labels
 
 Validate SR label installation in MPLS forwarding table:
 
@@ -144,12 +122,9 @@ show mpls forwarding-table labels 16001 16022
 show segment-routing mpls lb
 ```
 
-**Expected Results:**
-- SR labels **16001-16022** installed with correct next-hops
-- **Pop Label** action for directly connected node-SIDs
-- **Swap** operations for remote node-SIDs via optimal IGP paths
+SR labels 16001-16022 should be installed with the correct next-hops. Expect `Pop Label` action for directly connected node-SIDs and `Swap` operations for remote node-SIDs via the optimal IGP paths.
 
-### 5.4 SR-MPLS Connectivity Testing
+### 3.4 SR-MPLS Connectivity Testing
 
 Test end-to-end connectivity using SR labels:
 
@@ -159,50 +134,34 @@ ping mpls ipv4 16022 source 10.255.1.2
 traceroute mpls ipv4 16021 source 10.255.1.6
 ```
 
-**Expected Results:**
-- **100% success rate** for all SR label pings
-- **Sub-5ms latency** within lab environment
-- Traceroute shows **label operations** (Push/Swap/Pop) correctly
+Expect a 100% success rate for all SR label pings with response times under 10ms in lab environment, confirmed via Wireshark. Traceroute should show label operations (Push/Swap/Pop) correctly.
 
 ---
 
-## 6. Troubleshooting Common Issues
+## 4.0 Troubleshooting Common Issues
 
-### SR-MPLS Not Enabled
-- **Symptom**: `show segment-routing mpls state` shows **Disabled**
-- **Resolution**: Verify `segment-routing mpls` global configuration and check platform support
+**SR-MPLS Not Enabled:** If `show segment-routing mpls state` shows "Disabled", verify the `segment-routing mpls` global configuration and check the platform support.
 
-### Prefix-SID Not Advertised
-- **Symptom**: Missing SID Index in OSPF database
-- **Resolution**: Confirm `ospf prefix-sid index` on Loopback0 and verify area configuration
+**Prefix-SID Not Advertised:** Missing SID Index in OSPF database would mean that there's a missing `ospfv3 prefix-sid index` configuration on Loopback0 or an incorrect area configuration.
 
-### Label Range Conflicts
-- **Symptom**: SRGB allocation failures or label binding errors
-- **Resolution**: Check for overlapping label ranges with LDP or static MPLS configurations
+**Label Range Conflicts:** SRGB allocation failures or label binding errors would result from an overlapping label range with LDP, or a static MPLS configurations.
 
-### SR Forwarding Failures
-- **Symptom**: MPLS ping failures to node-SIDs
-- **Resolution**: Verify IGP convergence, MPLS interface enablement, and label operations
+**SR Forwarding Failures:** MPLS ping failures to node-SIDs could mean issues with IGP convergence, MPLS interface enablement, or label operations.
 
 ---
 
-## 7. Rollback Procedure
+## 5.0 Rollback
 
 To disable Segment Routing and revert to pure LDP operation:
 
 ```bash
-# Remove SR configuration from interfaces
 interface Loopback0
- no ospfv3 prefix-sid index [index] explicit-null
+ no ospfv3 prefix-sid index <index> explicit-null
 !
-# Disable SR in OSPFv3
 router ospfv3 10
  address-family ipv4 unicast
   no segment-routing mpls
   no area 0 segment-routing mpls
 !
-# Disable global SR-MPLS
 no segment-routing mpls
 ```
-
-Execute these commands on all six core devices to restore pure LDP-based MPLS operation.
