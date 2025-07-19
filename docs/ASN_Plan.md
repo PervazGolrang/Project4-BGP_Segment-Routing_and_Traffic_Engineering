@@ -10,7 +10,7 @@ This document outlines the Autonomous System Number (ASN) assignments for the BG
 |--------|-------------------|-------------------------------------|-----------------------------------------------------------|
 | 65001  | Regional ISP      | Primary service provider (Our ISP)  | R1_OSLO, R2_BGO, RR1_OSLO, RR2_BGO, CORE1_OSLO, CORE2_BGO |
 | 65002  | Upstream ISP      | Transit provider (dual PoP)         | ISP1_OSLO, ISP2_BGO                                       |
-| 65003  | Customer          | Multi-site enterprise customer      | CUST1_OSLO, CUST2_BGO, CUST_CORE_OSLO, CUST_SRV1_OSLO     |
+| 65003  | Customer          | Multi-site enterprise customer      | CUST1_OSLO, CUST2_BGO, CUST_CORE_OSLO                     |
 | 65010  | Peering Partner   | Settlement-free peer (Oslo)         | PEER1_OSLO                                                |
 | 65011  | Peering Partner   | Settlement-free peer (Bergen)       | PEER2_BGO                                                 |
 

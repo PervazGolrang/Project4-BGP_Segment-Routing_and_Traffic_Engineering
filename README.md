@@ -37,8 +37,8 @@ This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs
 
 | Component   | Requirement            | Notes                                 |
 | ----------- | ---------------------- | ------------------------------------- |
-| RAM         | 24GB+ with KSM         | 13 routers, ~4GB each                 |
-| vCPU        | 13+ vCPUs              | 1 per router minimum, 2 recommended   |
+| RAM         | 21GB+ with KSM         | 13 routers, ~4GB each                 |
+| vCPU        | 13+ vCPUs              | 1 vCPU minimum, 2 vCPU recommended    |
 | Platform    | CML-2.8.1 or EVE-NG    | Cat8000v 17.15.01a image              |
 
 Refer to [`notes.md`](/notes.md) to tune and enable KSM on CML. Do note it would take up to 15 minutes to fully complete the memory de-duplication.

@@ -239,9 +239,9 @@ ip prefix-list CUST2_PREFIXES seq 10 deny 0.0.0.0/0 le 32
 !
 router bgp 65001
  address-family ipv4 unicast
-  neighbor 198.51.100.6 route-map FROM_CUST2_IN in
-  neighbor 198.51.100.6 route-map TO_CUSTOMER_OUT out
-  neighbor 198.51.100.6 maximum-prefix 50 restart 5
+  neighbor 198.51.100.4 route-map FROM_CUST2_IN in
+  neighbor 198.51.100.4 route-map TO_CUSTOMER_OUT out
+  neighbor 198.51.100.4 maximum-prefix 50 restart 5
 ```
 
 ### 3.5 Infrastructure and Security Policies

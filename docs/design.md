@@ -21,7 +21,7 @@ The lab is split into two primary PoPs:
 * **Oslo Site (OSLO)**
 
   * Devices: R1_OSLO, RR1_OSLO, CORE1_OSLO, ISP1_OSLO, PEER1_OSLO
-  * Customers: CUST1_OSLO, CUST_CORE_OSLO, CUST_SRV1_OSLO
+  * Customers: CUST1_OSLO, CUST_CORE_OSLO
 
 * **Bergen Site (BGO)**
 
@@ -41,7 +41,6 @@ The lab is split into two primary PoPs:
 | Peers            | PEER1_OSLO, PEER2_BGO | Public peers for limited route exchange                |
 | Customer Edge    | CUST1_OSLO, CUST2_BGO | Simulate BGP customer endpoints using single-home      |
 | Customer Core    | CUST_CORE_OSLO        | Mid-layer for internal redistribution at customer site |
-| Customer Server  | CUST_SRV1             | TinyCore Linux node for pings and BGP verification     |
 
 ---
 
@@ -94,11 +93,10 @@ The lab is split into two primary PoPs:
 
 ## Simplifications and Assumptions
 
-* No IGP (OSPF/IS-IS) - BGP used for all routing
 * Static SID assignments to simplify TE policy design
 * PEER1/PEER2 are stub peers with no internal customers (simulated only)
-* Customers are single-homed - no redundancy modeled
-* Delay and jitter models not used - CML lab is idealized
+* Customers are single-homed, no redundancy is modeled
+* Delay and jitter models are not used, as CML lab is idealized
 * Full-mesh peering between edge, core, and RRs is reflected through BGP RR hierarchy
 
 ---

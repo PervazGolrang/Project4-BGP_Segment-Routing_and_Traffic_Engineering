@@ -41,8 +41,8 @@ sudo nano /etc/ksmtuned.conf
 
 Change/add these settings for aggressiv deduplication:
 ```bash
-KSM_MONITOR_INTERVAL=20         # How often in seconds KSM runs a check, default is 60s (too long)
-KSM_SLEEP_MSEC=10               # Sleep between scan, default is 20ms (a bit conservative)
+KSM_MONITOR_INTERVAL=10         # How often in seconds KSM runs a check, default is 60s (too long)
+KSM_SLEEP_MSEC=20               # Sleep between scan, default is 10ms (a bit conservative)
 KSM_NPAGES_MAX=3000             # Maximum pages to scan, default 1250 is a bit low
 KSM_THRES_COEF=70               # Activates KSM at 30% RAM usage, default is 20 (far too late)
 ```

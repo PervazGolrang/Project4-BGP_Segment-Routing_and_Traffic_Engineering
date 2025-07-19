@@ -1,34 +1,148 @@
-annotations: []
+annotations:
+  - border_color: '#7A7A7A'
+    border_radius: 0
+    border_style: 2,2
+    color: '#FF000010'
+    rotation: 0
+    thickness: 4
+    type: rectangle
+    x1: -560.0
+    y1: -360.0
+    x2: 840.0
+    y2: 280.0
+    z_index: 0
+  - border_color: '#00000000'
+    border_style: ''
+    color: '#FFFFFF'
+    rotation: 0
+    text_bold: true
+    text_content: AS 65003
+    text_font: monospace
+    text_italic: false
+    text_size: 15
+    text_unit: pt
+    thickness: 1
+    type: text
+    x1: -520.0
+    y1: -320.0
+    z_index: 1
+  - border_color: '#808080FF'
+    border_radius: 0
+    border_style: 4,2
+    color: '#FF7A0010'
+    rotation: 0
+    thickness: 1
+    type: rectangle
+    x1: -400.0
+    y1: -80.0
+    x2: 520.0
+    y2: 160.0
+    z_index: 2
+  - border_color: '#00000000'
+    border_style: ''
+    color: '#FFFFFF'
+    rotation: 0
+    text_bold: true
+    text_content: AS 65002
+    text_font: monospace
+    text_italic: false
+    text_size: 15
+    text_unit: pt
+    thickness: 1
+    type: text
+    x1: -160.0
+    y1: -40.0
+    z_index: 1
+  - border_color: '#808080FF'
+    border_radius: 0
+    border_style: 4,2
+    color: '#85FF0010'
+    rotation: 0
+    thickness: 1
+    type: rectangle
+    x1: -440.0
+    y1: 80.0
+    x2: 600.0
+    y2: 520.0
+    z_index: 3
+  - border_color: '#00000000'
+    border_style: ''
+    color: '#FFFFFF'
+    rotation: 0
+    text_bold: true
+    text_content: AS 65001
+    text_font: monospace
+    text_italic: false
+    text_size: 15
+    text_unit: pt
+    thickness: 1
+    type: text
+    x1: -160.0
+    y1: 160.0
+    z_index: 1
+  - border_color: '#808080FF'
+    border_radius: 0
+    border_style: 2,2
+    color: '#00FFF410'
+    rotation: 0
+    thickness: 1
+    type: rectangle
+    x1: -440.0
+    y1: 600.0
+    x2: 160.0
+    y2: 200.0
+    z_index: 0
+  - border_color: '#00000000'
+    border_style: ''
+    color: '#FFFFFF'
+    rotation: 0
+    text_bold: true
+    text_content: AS 65010
+    text_font: monospace
+    text_italic: false
+    text_size: 15
+    text_unit: pt
+    thickness: 1
+    type: text
+    x1: -400.0
+    y1: 760.0
+    z_index: 1
+  - border_color: '#808080FF'
+    border_radius: 0
+    border_style: 2,2
+    color: '#D500FF10'
+    rotation: 0
+    thickness: 1
+    type: rectangle
+    x1: 0.0
+    y1: 600.0
+    x2: 160.0
+    y2: 200.0
+    z_index: 0
+  - border_color: '#00000000'
+    border_style: ''
+    color: '#FFFFFF'
+    rotation: 0
+    text_bold: true
+    text_content: AS 65011
+    text_font: monospace
+    text_italic: false
+    text_size: 15
+    text_unit: pt
+    thickness: 1
+    type: text
+    x1: 40.0
+    y1: 760.0
+    z_index: 1
 smart_annotations: []
 nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
     id: n0
-    image_definition: null
-    label: CUST-SRV1
-    node_definition: alpine
-    parameters: {}
-    ram: null
-    tags: []
-    x: -120
-    y: -160
-    interfaces:
-      - id: i0
-        label: eth0
-        mac_address: null
-        slot: 0
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: null
-    data_volume: null
-    hide_links: false
-    id: n1
     image_definition: null
     label: CUST1_OSLO
     node_definition: cat8000v
@@ -65,10 +179,10 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n2
+    id: n1
     image_definition: null
     label: CUST2_BGO
     node_definition: cat8000v
@@ -105,10 +219,10 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n3
+    id: n2
     image_definition: null
     label: CUST_CORE_OSLO
     node_definition: cat8000v
@@ -116,7 +230,7 @@ nodes:
     ram: null
     tags: []
     x: -120
-    y: -360
+    y: -280
     interfaces:
       - id: i0
         label: Loopback0
@@ -150,18 +264,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n4
+    id: n3
     image_definition: null
     label: R1_OSLO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: -320
-    y: 120
+    x: -360
+    y: 160
     interfaces:
       - id: i0
         label: Loopback0
@@ -195,10 +309,10 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n5
+    id: n4
     image_definition: null
     label: ISP1_OSLO
     node_definition: cat8000v
@@ -206,7 +320,7 @@ nodes:
     ram: null
     tags: []
     x: -320
-    y: -80
+    y: -40
     interfaces:
       - id: i0
         label: Loopback0
@@ -235,10 +349,10 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n6
+    id: n5
     image_definition: null
     label: ISP2_BGO
     node_definition: cat8000v
@@ -246,7 +360,7 @@ nodes:
     ram: null
     tags: []
     x: 40
-    y: -80
+    y: -40
     interfaces:
       - id: i0
         label: Loopback0
@@ -275,18 +389,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n7
+    id: n6
     image_definition: null
     label: R2_BGO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: 40
-    y: 120
+    x: 80
+    y: 160
     interfaces:
       - id: i0
         label: Loopback0
@@ -320,18 +434,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n8
+    id: n7
     image_definition: null
     label: RR1_OSLO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: -280
-    y: 280
+    x: -320
+    y: 320
     interfaces:
       - id: i0
         label: Loopback0
@@ -365,18 +479,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n9
+    id: n8
     image_definition: null
     label: RR2_BGO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: 0
-    y: 280
+    x: 40
+    y: 320
     interfaces:
       - id: i0
         label: Loopback0
@@ -410,18 +524,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n10
+    id: n9
     image_definition: null
     label: CORE1_OSLO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: -320
-    y: 480
+    x: -360
+    y: 520
     interfaces:
       - id: i0
         label: Loopback0
@@ -450,18 +564,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n11
+    id: n10
     image_definition: null
     label: CORE2_BGO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: 40
-    y: 480
+    x: 80
+    y: 520
     interfaces:
       - id: i0
         label: Loopback0
@@ -490,18 +604,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n12
+    id: n11
     image_definition: null
     label: PEER1_OSLO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: -320
-    y: 640
+    x: -360
+    y: 680
     interfaces:
       - id: i0
         label: Loopback0
@@ -530,18 +644,18 @@ nodes:
   - boot_disk_size: null
     configuration: []
     cpu_limit: null
-    cpus: null
+    cpus: 2
     data_volume: null
     hide_links: false
-    id: n13
+    id: n12
     image_definition: null
     label: PEER2_BGO
     node_definition: cat8000v
     parameters: {}
     ram: null
     tags: []
-    x: 40
-    y: 640
+    x: 80
+    y: 680
     interfaces:
       - id: i0
         label: Loopback0
@@ -569,148 +683,141 @@ nodes:
         type: physical
 links:
   - id: l0
-    n1: n0
-    n2: n3
-    i1: i0
-    i2: i1
-    conditioning: {}
-    label: alpine-0-eth0<->CUST_CORE_OSLO-GigabitEthernet1
-  - id: l1
-    n1: n3
-    n2: n1
+    n1: n2
+    n2: n0
     i1: i2
     i2: i1
     conditioning: {}
     label: CUST_CORE_OSLO-GigabitEthernet2<->CUST1_OSLO-GigabitEthernet1
-  - id: l2
-    n1: n3
-    n2: n2
+  - id: l1
+    n1: n2
+    n2: n1
     i1: i3
     i2: i1
     conditioning: {}
     label: CUST_CORE_OSLO-GigabitEthernet3<->CUST2_BGO-GigabitEthernet1
-  - id: l3
-    n1: n1
-    n2: n4
+  - id: l2
+    n1: n0
+    n2: n3
     i1: i3
     i2: i1
     conditioning: {}
     label: CUST1_OSLO-GigabitEthernet3<->R1_OSLO-GigabitEthernet1
-  - id: l4
-    n1: n2
-    n2: n7
+  - id: l3
+    n1: n1
+    n2: n6
     i1: i3
     i2: i1
     conditioning: {}
     label: CUST2_BGO-GigabitEthernet3<->R2_BGO-GigabitEthernet1
-  - id: l5
-    n1: n5
-    n2: n4
+  - id: l4
+    n1: n4
+    n2: n3
     i1: i2
     i2: i2
     conditioning: {}
     label: ISP1_OSLO-GigabitEthernet2<->R1_OSLO-GigabitEthernet2
-  - id: l6
-    n1: n6
-    n2: n7
+  - id: l5
+    n1: n5
+    n2: n6
     i1: i2
     i2: i2
     conditioning: {}
     label: ISP2_BGO-GigabitEthernet2<->R2_BGO-GigabitEthernet2
-  - id: l7
-    n1: n4
-    n2: n6
-    i1: i3
-    i2: i3
-    conditioning: {}
-    label: R1_OSLO-GigabitEthernet3<->ISP2_BGO-GigabitEthernet3
-  - id: l8
-    n1: n7
+  - id: l6
+    n1: n3
     n2: n5
     i1: i3
     i2: i3
     conditioning: {}
+    label: R1_OSLO-GigabitEthernet3<->ISP2_BGO-GigabitEthernet3
+  - id: l7
+    n1: n6
+    n2: n4
+    i1: i3
+    i2: i3
+    conditioning: {}
     label: R2_BGO-GigabitEthernet3<->ISP1_OSLO-GigabitEthernet3
-  - id: l9
-    n1: n4
-    n2: n8
+  - id: l8
+    n1: n3
+    n2: n7
     i1: i4
     i2: i1
     conditioning: {}
     label: R1_OSLO-GigabitEthernet4<->RR1_OSLO-GigabitEthernet1
-  - id: l10
-    n1: n7
-    n2: n9
+  - id: l9
+    n1: n6
+    n2: n8
     i1: i4
     i2: i1
     conditioning: {}
     label: R2_BGO-GigabitEthernet4<->RR2_BGO-GigabitEthernet1
+  - id: l10
+    n1: n7
+    n2: n9
+    i1: i2
+    i2: i1
+    conditioning: {}
+    label: RR1_OSLO-GigabitEthernet2<->CORE1_OSLO-GigabitEthernet1
   - id: l11
     n1: n8
     n2: n10
     i1: i2
     i2: i1
     conditioning: {}
-    label: RR1_OSLO-GigabitEthernet2<->CORE1_OSLO-GigabitEthernet1
-  - id: l12
-    n1: n9
-    n2: n11
-    i1: i2
-    i2: i1
-    conditioning: {}
     label: RR2_BGO-GigabitEthernet2<->CORE2_BGO-GigabitEthernet1
-  - id: l13
-    n1: n8
-    n2: n7
+  - id: l12
+    n1: n7
+    n2: n6
     i1: i3
     i2: i5
     conditioning: {}
     label: RR1_OSLO-GigabitEthernet3<->R2_BGO-GigabitEthernet5
-  - id: l14
-    n1: n9
-    n2: n4
+  - id: l13
+    n1: n8
+    n2: n3
     i1: i3
     i2: i5
     conditioning: {}
     label: RR2_BGO-GigabitEthernet3<->R1_OSLO-GigabitEthernet5
-  - id: l15
-    n1: n10
-    n2: n9
-    i1: i2
-    i2: i4
-    conditioning: {}
-    label: CORE1_OSLO-GigabitEthernet2<->RR2_BGO-GigabitEthernet4
-  - id: l16
-    n1: n11
+  - id: l14
+    n1: n9
     n2: n8
     i1: i2
     i2: i4
     conditioning: {}
+    label: CORE1_OSLO-GigabitEthernet2<->RR2_BGO-GigabitEthernet4
+  - id: l15
+    n1: n10
+    n2: n7
+    i1: i2
+    i2: i4
+    conditioning: {}
     label: CORE2_BGO-GigabitEthernet2<->RR1_OSLO-GigabitEthernet4
+  - id: l16
+    n1: n9
+    n2: n11
+    i1: i3
+    i2: i1
+    conditioning: {}
+    label: CORE1_OSLO-GigabitEthernet3<->PEER1_OSLO-GigabitEthernet1
   - id: l17
     n1: n10
     n2: n12
     i1: i3
     i2: i1
     conditioning: {}
-    label: CORE1_OSLO-GigabitEthernet3<->PEER1_OSLO-GigabitEthernet1
-  - id: l18
-    n1: n11
-    n2: n13
-    i1: i3
-    i2: i1
-    conditioning: {}
     label: CORE2_BGO-GigabitEthernet3<->PEER2_BGO-GigabitEthernet1
-  - id: l19
-    n1: n10
-    n2: n11
+  - id: l18
+    n1: n9
+    n2: n10
     i1: i4
     i2: i4
     conditioning: {}
     label: CORE1_OSLO-GigabitEthernet4<->CORE2_BGO-GigabitEthernet4
-  - id: l20
-    n1: n8
-    n2: n9
+  - id: l19
+    n1: n7
+    n2: n8
     i1: i5
     i2: i5
     conditioning: {}

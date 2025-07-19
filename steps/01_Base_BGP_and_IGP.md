@@ -42,8 +42,12 @@ hostname <DEVICE_NAME>
 interface Loopback0
  description "Router-ID"
  ip address <LOOPBACK_IPv4> 255.255.255.255
+ ipv6 enable
+ ospfv3 10 ipv4 area 0
 !
 mpls ip
+!
+ipv6 unicast-routing
 ```
 
 ### 3.2 Transit Interface Configuration
@@ -56,7 +60,8 @@ The `point-to-point` network type prevents unnecessary DR/BDR elections on P2P l
 interface <INTERFACE_ID>
  description "To <Linked-Device>"
  ip address <IPv4_ADDRESS> 255.255.255.254
- ip ospf network point-to-point
+ ospfv3 10 ipv4 network point-to-point
+ ipv6 enable
 !
  mpls ip
 !
@@ -100,23 +105,23 @@ Enable LDP to distribute labels for IGP prefixes and enables PHP behavior.
 ### 3.5 Global LDP Configuration
 
 ```bash
-mpls ldp router-id <IPv4_LOOPBACK> force
-!
-interface <INTERFACE_ID>
- mpls ldp igp sync
- mpls ldp discovery transport-address <IPv4_LOOPBACK>     #L0 of device
+mpls ldp router-id Loopback0 force
 !
 mpls ldp advertise-labels
 mpls ldp explicit-null
+!
+interface <INTERFACE_ID>
+ mpls ldp igp sync
+ mpls ldp discovery transport-address <IPv4_LOOPBACK>
 ```
 
-The transport address should match each device's loopback IP (e.g., 10.255.1.1 for R1_OSLO, 10.255.1.4 for RR2_BGO).
+LDP is forced on Loopback0 to be used as the LDP identifier. Also, the transport address should match each device's loopback IP (e.g., 10.255.1.1 for R1_OSLO, 10.255.1.4 for RR2_BGO ...).
 
 ### 3.6 BGP Route Reflector Hierarchy
 
 #### Route Reflector Configuration
 
-Route reflector configuration on RR1_OSLO and RR2_BGO:
+**Route reflector configuration on RR1_OSLO and RR2_BGO:**
 
 ```bash
 router bgp 65001
@@ -124,40 +129,55 @@ router bgp 65001
  bgp log-neighbor-changes
  bgp cluster-id <IPv4_RR_LOOPBACK>
 !
- address-family ipv4 unicast
-  neighbor RR-CLIENTS peer-group
-  neighbor RR-CLIENTS remote-as 65001
-  neighbor RR-CLIENTS update-source Loopback0
-  neighbor RR-CLIENTS route-reflector-client
-  neighbor RR-CLIENTS send-community both
-!
   neighbor 10.255.1.1 peer-group RR-CLIENTS             # R1_OSLO Loopback0
   neighbor 10.255.1.2 peer-group RR-CLIENTS             # R2_BGO Loopback0
   neighbor 10.255.1.5 peer-group RR-CLIENTS             # CORE1_OSLO Loopback0
   neighbor 10.255.1.6 peer-group RR-CLIENTS             # CORE2_BGO Loopback0
 !
+  neighbor RR-CLIENTS send-community both
+  neighbor RR-CLIENTS update-source Loopback0
+  neighbor RR-CLIENTS peer-group
+  neighbor RR-CLIENTS remote-as 65001
+!
   neighbor <OTHER_RR_LOOPBACK> remote-as 65001          # E.g. 10.255.1.4 (RR2 L0, if config of RR1)
   neighbor <OTHER_RR_LOOPBACK> update-source Loopback0
   neighbor <OTHER_RR_LOOPBACK> send-community both
 !
+ address-family ipv4 unicast
+  neighbor RR-CLIENTS route-reflector-client
+!
+  neighbor 10.255.1.1 activate                          # R1_OSLO Loopback0
+  neighbor 10.255.1.1 activate                          # R1_OSLO Loopback0
+  neighbor 10.255.1.X activate                          # RR1/RR2 Loopback0
+  neighbor 10.255.1.5 activate                          # CORE1_OSLO Loopback0
+  neighbor 10.255.1.6 activate                          # CORE2_BGO Loopback0
+!
+  neighbor <OTHER_RR_LOOPBACK> activate
+!
 ```
+
+Change `X` with the RR1/RR2 Loopback.
 
 **RR Client Assignments:** Both RR1_OSLO (10.255.1.3) and RR2_BGO (10.255.1.4) serve all four clients: R1_OSLO, R2_BGO, CORE1_OSLO, and CORE2_BGO. This provides full redundancy since all clients connect to both route reflectors.
 
-Route reflector client configuration (applied to R1_OSLO, R2_BGO, CORE1_OSLO, CORE2_BGO):
+**Route reflector client configuration (applied to R1_OSLO, R2_BGO, CORE1_OSLO, CORE2_BGO):**
 
 ```bash
 router bgp 65001
  bgp router-id <CLIENT_LOOPBACK_IPv4>
  bgp log-neighbor-changes
 !
- address-family ipv4 unicast
-  neighbor 10.255.1.3 remote-as 65001               # Peer with RR1   
+  neighbor 10.255.1.3 remote-as 65001               # Peer with RR1
   neighbor 10.255.1.3 update-source Loopback0
-  neighbor 10.255.1.3 send-community both
 !
   neighbor 10.255.1.4 remote-as 65001               # Peer with RR2
   neighbor 10.255.1.4 update-source Loopback0
+!
+ address-family ipv4 unicast
+  neighbor 10.255.1.3 activate   
+  neighbor 10.255.1.3 send-community both
+!
+  neighbor 10.255.1.4 activate 
   neighbor 10.255.1.4 send-community both
 ```
 
@@ -172,7 +192,7 @@ Verify that MPLS forwarding entries exist for all loopback prefixes:
 ```bash
 show ospfv3 neighbor
 show ospfv3 database
-show ip route ospf
+show ospfv3 10 ipv4 database
 ```
 
 All neighbor states should show `FULL`. The OSPF database should contain LSAs from all 6 core devices with /32 routes for all loopbacks.
@@ -192,22 +212,21 @@ Validate BGP session establishment and route reflector functionality:
 
 ```bash
 show bgp ipv4 unicast summary
-show bgp ipv4 unicast neighbors <neighbor-ip> advertised-routes
 ```
 
-All BGP sessions should be in `Established` state. Route reflectors should show advertised prefixes to clients, and clients should receive reflected routes from other RR clients.
+Should show valid BGP state with Up/Down.
 
 ### 4.4 End-to-End Reachability Testing
 
 Test IP connectivity between all core device loopbacks:
 
 ```bash
-ping 10.255.1.1 source 10.255.1.6
-ping 10.255.1.2 source 10.255.1.5  
+ping 10.255.1.1 source 10.255.1.6             #Pinging R1_OSLO from CORE2_BGO Lo0
+ping 10.255.1.2 source 10.255.1.5             #Pinging R2_BGO from CORE1_OSLO Lo0
 traceroute 10.255.1.1 source 10.255.1.6
 ```
 
-Expect 100% success rate with <10ms response times in lab environment, confirmed with Wireshark. Traceroute paths should follow optimal OSPF cost calculations.
+Expect a +80% success rate (due to ARP), with a sub-10ms response time in the lab environment. Pinging [`R1_OSLO from CORE2_BGO's Loopback0`](/wireshark/CORE2_BGO-to-R1_OSLO-Step01.pcap) shows an average ~2ms latency between packets. Traceroute paths should follow optimal OSPF cost calculations.
 
 ---
 
@@ -215,7 +234,7 @@ Expect 100% success rate with <10ms response times in lab environment, confirmed
 
 **BGP Session Failures:** BGP neighbors stuck in Active or Connect state would result to IP reachability issues. Verify `update-source Loopback0` configuration.
 
-**OSPF Adjacency Issues:** Neighbor states showing INIT or 2WAY are due to missing ospf network point-to-point configuration on P2P interfaces.
+**OSPF Adjacency Issues:** Neighbor states showing `INIT` or `2WAY` are due to missing ospf network point-to-point configuration on P2P interfaces.
 
 **MPLS Forwarding Gaps:** Missing LFIB entries mean that the `mpls ip` is not configured on transit interfaces, or OSPF is not advertising loopbacks properly.
 

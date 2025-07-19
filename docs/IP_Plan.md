@@ -28,7 +28,6 @@ This IP-PÅlan follows a clear, structured model using /31 or /30 for point-to-p
 | CUST1_OSLO      | 10.255.1.11   | 2001:db8:cc00::11 | —         | —         | —     |
 | CUST2_BGO       | 10.255.1.12   | 2001:db8:cc00::12 | —         | —         | —     |
 | CUST_CORE_OSLO  | 10.255.1.13   | 2001:db8:cc00::13 | —         | —         | —     |
-| CUST_SRV1_OSLO  | 10.255.1.14   | 2001:db8:cc00::14 | —         | —         | —     |
 
 IPv6 Loopback block can be ignored if not following [`03_IPv6_DualStack.md`](/IPv6_DualStack.md), it is only mentioned here as a visual representation.
 
@@ -55,9 +54,9 @@ IPv6 Loopback block can be ignored if not following [`03_IPv6_DualStack.md`](/IP
 | CORE2_BGO ↔ PEER2_BGO             | 192.0.2.28/31    | .28 (G3)        | .29 (G1)        |
 | CUST1_OSLO ↔ R1_OSLO              | 198.51.100.0/31  | .0 (G3)         | .1 (G1)         |
 | CUST1_OSLO ↔ CUST_CORE_OSLO       | 198.51.100.2/31  | .2 (G1)         | .3 (G2)         |
-| CUST_CORE_OSLO ↔ CUST_SRV1        | 198.51.100.4/31  | .4 (G1)         | .5 (E0)         |
-| CUST2_BGO ↔ R2_BGO                | 198.51.100.6/31  | .6 (G3)         | .7 (G1)         |
-| CORE1_OSLO ↔ CORE2_BGO            | 198.51.100.8/31  | .8 (G4)         | .9 (G4)         |
+| CUST2_BGO ↔ R2_BGO                | 198.51.100.4/31  | .4 (G3)         | .5 (G1)         |
+| CORE1_OSLO ↔ CORE2_BGO            | 198.51.100.6/31  | .6 (G4)         | .7 (G4)         |
+| CUST2_BGO ↔ CUST_CORE_OSLO        | 198.51.100.8/31  | .8 (G1)         | .9 (G3)         |
 
 ---
 

@@ -31,16 +31,3 @@ Only these **six routers** participate in SR‑MPLS. The reason for this design 
 The reason it to isolate the segment routing from external BGP relationships and edge complexity, to ensure that SR-MPLS remains focused on backbone traffic engineering. By limiting the participation to core nodes, the SID allocation becomes simpler to manage and the SRGB space stays clean and organized. This design leverages Segment Routing's key benefits of FRR and deterministic pathing to where it provides the most value, i.e. in the high-speed backbone connections between major network sites.
 
 From an operational standpoint, this implementation minimizes risk and complexity while making the overall design easier to maintain and scale as the network grows, even though this lab is a small simulation. The diverse service requirements and external peering relationships are handled by edge routers, without additional overhead of the segment routing configuration.
-
----
-
-## Adjacency SIDs
-
-Adjacency SIDs are not manually configured in this topology, OSPF automatically allocates dynamic Adj‑SIDs as needed.
-
-If future explicit hop‑by‑hop SR‑TE path control is required, manual Adj‑SIDs can be added between:
-
-* `R1_OSLO` and `CORE1_OSLO`
-* `R2_BGO` and `CORE2_BGO`
-
-Only SR‑participating devices support adjacency SIDs. All non‑SR devices are excluded from SID allocation entirely.

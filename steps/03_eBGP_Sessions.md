@@ -24,7 +24,7 @@ This phase implements external BGP connectivity to complete the service provider
 | R2_BGO        | ISP1_OSLO     | Customer-Provider | Transit      | 192.0.2.4/31  | 192.0.2.5     | 65002      |
 | R2_BGO        | ISP2_BGO      | Customer-Provider | Transit      | 192.0.2.6/31  | 192.0.2.7     | 65002      |
 | R1_OSLO       | CUST1_OSLO    | Provider-Customer | Customer     | 198.51.100.1  | 198.51.100.0  | 65003      |
-| R2_BGO        | CUST2_BGO     | Provider-Customer | Customer     | 198.51.100.7  | 198.51.100.6  | 65003      |
+| R2_BGO        | CUST2_BGO     | Provider-Customer | Customer     | 198.51.100.5  | 198.51.100.4  | 65003      |
 | CORE1_OSLO    | PEER1_OSLO    | Peer-Peer         | Public       | 192.0.2.26/31 | 192.0.2.27    | 65010      |
 | CORE2_BGO     | PEER2_BGO     | Peer-Peer         | Public       | 192.0.2.28/31 | 192.0.2.29    | 65011      |
 
@@ -173,15 +173,15 @@ router bgp 65001
 ```bash
 router bgp 65001
 !
- neighbor 198.51.100.6 remote-as 65003
- neighbor 198.51.100.6 description "Customer CUST2_BGO"
- neighbor 198.51.100.6 send-community both
+ neighbor 198.51.100.4 remote-as 65003
+ neighbor 198.51.100.4 description "Customer CUST2_BGO"
+ neighbor 198.51.100.4 send-community both
 !
  address-family ipv4 unicast
-  neighbor 198.51.100.6 activate
-  neighbor 198.51.100.6 default-originate
-  neighbor 198.51.100.6 prefix-list CUST2_IN in
-  neighbor 198.51.100.6 prefix-list CUST2_OUT out
+  neighbor 198.51.100.4 activate
+  neighbor 198.51.100.4 default-originate
+  neighbor 198.51.100.4 prefix-list CUST2_IN in
+  neighbor 198.51.100.4 prefix-list CUST2_OUT out
 ```
 
 ---
@@ -271,7 +271,7 @@ To remove all eBGP sessions and revert to iBGP-only:
 router bgp 65001
  address-family ipv4 unicast
   no neighbor 198.51.100.0
-  no neighbor 198.51.100.6
+  no neighbor 198.51.100.4
   no neighbor 192.0.2.27
   no neighbor 192.0.2.29
   no neighbor 192.0.2.1

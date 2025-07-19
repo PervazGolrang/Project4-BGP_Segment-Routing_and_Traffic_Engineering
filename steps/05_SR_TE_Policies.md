@@ -140,7 +140,7 @@ segment-routing
       index 20 mpls label 16002        # R2_BGO
      !
     preference 50
-     description Dynamic fallback
+     description "Dynamic fallback"
      dynamic
       metric type igp
       constraints
@@ -327,8 +327,8 @@ route-map SET_COLOR permit 20
 
 router bgp 65001
  address-family ipv4 unicast
-  neighbor 198.51.100.6 send-community extended
-  neighbor 198.51.100.6 route-map SET_COLOR out
+  neighbor 198.51.100.4 send-community extended
+  neighbor 198.51.100.4 route-map SET_COLOR out
 ```
 
 ### 3.7 SR-TE Policy Monitoring
