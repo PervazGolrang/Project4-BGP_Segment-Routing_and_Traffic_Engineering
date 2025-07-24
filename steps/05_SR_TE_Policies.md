@@ -17,11 +17,11 @@ This step deploys Segment Routing Traffic Engineering (SR-TE) policies using **I
 
 **Color-Based Service Classes:**
 
-| Color | Service Class | Characteristics             | Use Cases                 | SLA Requirements |
-|-------|---------------|-----------------------------|---------------------------|------------------|
-| 100   | Premium       | Low latency, direct paths   | Voice, real-time apps     | <5ms, 99.99%     |
-| 200   | Standard      | Best effort, load balanced  | Web traffic, email        | <20ms, 99.9%     |
-| 300   | Core/Backup   | Resilience, alternate paths | Disaster recovery, backup | <50ms, 99%       |
+| Color | Service Class | Characteristics             |
+|-------|---------------|-----------------------------|
+| 100   | Premium       | Low latency, direct paths   |
+| 200   | Standard      | Best effort, load balanced  |
+| 300   | Core/Backup   | Resilience, alternate paths |
 
 I will not test traffic, the lab will not go that far.
 
@@ -306,7 +306,7 @@ show segment-routing traffic-eng policy
 show segment-routing traffic-eng policy color [color]       # e.g. 300 on CORE1_OSLO
 ```
 
-All policies should show "Admin: `up`, Operational: `up`" status. The highest preference candidate-path should be selected.
+All policies should show "Admin: `up`, Operational: `up` status. The highest preference candidate-path should be selected.
 
 ### 4.2 MPLS Forwarding Verification
 

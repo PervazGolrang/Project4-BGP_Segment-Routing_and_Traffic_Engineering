@@ -170,7 +170,7 @@ Expect a +100% success rate (after ARP), with a sub-10ms ICMP response time, and
 
 - Pinging [`R1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-CORE2_BGO-to-R1_OSLO-ICMP.pcap) shows an average ~2ms latency between packets. Traceroute paths should follow optimal OSPF cost calculations.
 
-- Traceroute [``RR1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-RR1_OSLO-to-CORE2_BGO-TRACEROUTE.pcap) shows an average ~14ms latency between packets. Traceroute followed the optimal OSPF path through cost calculations. 
+- Traceroute [`RR1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-RR1_OSLO-to-CORE2_BGO-TRACEROUTE.pcap) shows an average ~14ms latency between packets. Traceroute followed the optimal OSPF path through cost calculations. 
 
 ### 3.4 Route Reflection Verification
 
@@ -198,8 +198,6 @@ Clients should receive reflected routes from other clients.
 ---
 
 ## 5. Rollback
-
-To return the network to pre-BGP, pre-MPLS baseline configuration:
 
 ```bash
 no router bgp 65001

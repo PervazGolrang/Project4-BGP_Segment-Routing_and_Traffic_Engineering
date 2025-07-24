@@ -409,8 +409,6 @@ show bgp neighbors <customer-ip> advertised-routes
 
 ## 5. Rollback
 
-To remove all BGP policies per device:
-
 ### 5.1 R1_OSLO:
 ```bash
 no prefix-set OWN_PREFIXES

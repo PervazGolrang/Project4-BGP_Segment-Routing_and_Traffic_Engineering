@@ -302,6 +302,7 @@ All eBGP sessions should show an `Established` state with an uptime counter incr
 **Route Advertisement Issues:** If the correct routes are not advertised to eBGP neighbors, it would mean there's either than incorrect network statement, or a prefix-list misconfiguration.
 
 **Next-Hop Reachability Issues:** If routes are installed but the traffic fails, then the IGP is not properly advertising eBGP next-hop addresses.
+
 ---
 
 ## 6. Rollback

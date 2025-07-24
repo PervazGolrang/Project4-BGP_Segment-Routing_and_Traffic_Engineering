@@ -25,7 +25,7 @@ These six network devices will be refered as to the **Core Devices** throughout 
 
 **Per-Device Index Values:**
 -    **R1_OSLO**:  `prefix-sid index 1`
--     **R2_BGO**:  `prefix-sid index 2` 
+-    **R2_BGO**:   `prefix-sid index 2` 
 -   **RR1_OSLO**:  `prefix-sid index 11`
 -    **RR2_BGO**:  `prefix-sid index 12`
 - **CORE1_OSLO**:  `prefix-sid index 21`
@@ -62,23 +62,7 @@ show segment-routing global-block
 show segment-routing local-block
 ```
 
-Expected output:
-- **SR State**: Enabled
-- **SRGB**: 16000-23999  
-- **SRLB**: 15000-15999
-
-### 3.2 OSPF Segment Routing Database
-
-Confirm prefix-SID advertisement in OSPF:
-
-```bash
-show ospf database opaque-area
-show ospf database segment-routing
-```
-
-Should show Extended Prefix LSAs with SID sub-TLVs for all loopback interfaces.
-
-### 3.3 MPLS Forwarding Table
+### 3.2 MPLS Forwarding Table
 
 Validate SR label installation:
 
@@ -91,7 +75,7 @@ SR labels 16001-16022 should be installed with correct next-hops. Expect:
 - **Pop Label** action for directly connected node-SIDs
 - **Swap** operations for remote node-SIDs via optimal IGP paths
 
-### 3.4 Node-SID Verification
+### 3.3 Node-SID Verification
 
 Verify each device's Node-SID:
 
@@ -116,8 +100,6 @@ Each loopback should have its assigned index advertised in OSPF and installed in
 
 ## 5. Rollback
 
-To disable Segment Routing:
-
 ```bash
 router ospf 10
  no segment-routing mpls
@@ -128,5 +110,3 @@ router ospf 10
 config
  no segment-routing
 ```
-
-This removes all SR configuration and reverts back to the basic IP forwarding configuration.

@@ -15,16 +15,6 @@ This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs
 
 ---
 
-## Topology Highlights
-
-13 Cat8000v routers simulating realistic ISP operations:
-
-- **Oslo site:** R1_OSLO, RR1_OSLO, CORE1_OSLO + upstream/peer/customer connections
-- **Bergen site:** R2_BGO, RR2_BGO, CORE2_BGO + upstream/peer/customer connections
-- **External networks:** 2 upstream ISPs, 2 public peers, multi-site customer
-
----
-
 ## Network Topology
 ![`Network Topology with ASN borders`](topology/project4_bgp_sr_te.png)
 
