@@ -27,8 +27,8 @@ This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs
 
 | Component   | Requirement                       | Notes                                                 |
 | ----------- | --------------------------------- | ----------------------------------------------------- |
-| RAM         | 64GB with KSM, 180GB without KSM  | 13 routers, ~4GB each                                 |
-| vCPU        | 28+ vCPUs                         | 4 vCPU recommended per core node, 1 vCPU per non-core |
+| RAM         | 64GB with KSM, 180GB without KSM  | 13 routers, ~20GB each (XRv only), ~1GB each (IOSv)   |
+| vCPU        | 28+ vCPUs                         | 4 vCPU recommended per **core** node, 1 vCPU per non-core |
 | Platform    | CML-2.8.1 or EVE-NG               | IOS XRv 9000v 24.3.1, IOSv images                     |
 
 Refer to [`notes.md`](/notes.md) to tune and enable KSM on CML. Do note it would take up to 15 minutes to fully complete the memory de-duplication.
