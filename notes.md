@@ -1,32 +1,36 @@
 # Lab Notes
 
-Personal notes and lessons learned from implementing the BGP Segment Routing and Traffic Engineering lab.
+These are personal notes, reflections and lessons learned from implementing the BGP Segment Routing and Traffic Engineering lab. 
 
 ---
 
-## Technical Issues Encountered
+## Platform Journey
 
-### Cat8000v License Activation
-I had to activate the license on all devices to get all SR features working. By default, the network images do not run a license when starting up. For this lab, you only need the **Network Advantage** license, which includes the necessary advanced routing feautures like BGP, SR, and TE.
+I researched a lot before starting this lab, I later found out it was not enough. I wrote the configuration steps before setting everything up, by following documentation and my past experience of the network devices. I started with Cat8000v as my **core** network devices since my research showed it was far more feature-rich than CSR1000v. However, halfway-through implementing SR, I discovered that the Cat8000v has severely limited SR-TE support; basic color/candidate-path functionality, with no proper segment lists. I was forced to switch to IOS XRv, which is a Service Provider router with a boot time of 15 minutes plus another 20 minutes for KSM deduplication.
 
-You can enable **Network Premier** license, however, it only adds unnecessary features like SD-WAN, QoS, advanced security, analytics, and other stuff not needed for this lab. I still activated the **Network Premiere** license for this project. Just as a security measure if Cisco's documentation was outdated in some aspects. 
+Switching to IOS XRv caused a complete rewrite of all the configurations, from IOS-XE to IOS-XR syntax. There were several problems because Cisco changed names from some logic, e.g. Route-maps became route-policies, prefix-lists became prefix-sets, and a completely different BGP and OSPF address-family structure. Every small difference caused extra delays as I essentially had to learn a new operating system.
 
-Avoid the **Network Essentials**, as you would not have the ability to use BGP, SR/TE, or full OSPFv3 for dual-stack deployment.
+The final lab topology ended up being **IOS XRv** for the **six core devices** (R1, R2, RR1, RR3, CORE1, CORE2) and **IOSv** for the external devices (ISPs, peers, customers). IOSv was good enough since I only needed basic BGP functinality. I avoided BGP `address-family ipv4` due to several complaints online said it was buggy.
 
-You need to activate the license on each router, save to flash, then reboot. Since there are 13 devices, you can use the bootstrap config injection in CML on the `iosx3_config.txt`. 
+---
 
-```bash
-license boot level network-premier addon dna-premier
-!
-hostname <router>
-!
-end
-```
+## Technical Discoveries
 
-Do note that you do not need to reload, as when CML starts a node, it's essentially a fresh boot. Also, due to a bug that Cisco is continuing to neglect for half-a-decade, if you write `show license summary`, it will show that no license is active. The license is active, you can confirm by activating mpls. A non-activated license would display an error that `mpls ...` is an invalid command.
+### eBGP Multihop Confusion
 
-### CML Performance Tuning
-To reduce memory by utilizing deduplication, EVE-NG by default, comes with UKSM, however, CML does not have UKSM or KSM installed by default. Installing and configuring UKSM is far too complex, however, to install and enable KSM is much simpler:
+I started the eBGP configurations with `ebgp-multihop 1` on all eBGP sessions, I later realized that it wasn't needed since all eBGP peers are directly conected via /31 links. It would lead to a weakened security since its accepting BGP sessions from more than one hop away. I should focus more on more BGP projects.
+
+### BGP Community "Additive" Keyword
+
+This concept is something I neglected in my CCNP Enterprise studies. It caused about an hour of debugging, onyly to figure out I didn't include the `additive` keyword. Without the keyword, the route communities would get replaced instead of appended.
+
+---
+
+## Performance and Infrastructure
+
+### CML Memory Optimization
+
+CML doesn't include KSM (Kernel Same-page Merging) by default, as compared to EVE-NG (comes with optimized UKSM). Installing and configuring UKSM was far too complex, so I installed KSM, which worked similarly, albeit less efficient, however, it was still a significantly improvement for memory deduplication. Manually installing and configuring KSM was simple:
 
 Install the KSM Tuned daemon:
 ```bash
@@ -38,12 +42,11 @@ Edit the config:
 ```bash
 sudo nano /etc/ksmtuned.conf
 ```
-
-Change/add these settings for aggressiv deduplication:
+Change these settings for more aggressive deduplication settings. This change reduces memory deduplication completion from 50 minutes to 20 minutes:
 ```bash
 KSM_MONITOR_INTERVAL=10         # How often in seconds KSM runs a check, default is 60s (too long)
 KSM_SLEEP_MSEC=20               # Sleep between scan, default is 10ms (a bit conservative)
-KSM_NPAGES_MAX=3000             # Maximum pages to scan, default 1250 is a bit low
+KSM_NPAGES_MAX=10000            # Maximum pages to scan, default is 1250 (very low)
 KSM_THRES_COEF=70               # Activates KSM at 30% RAM usage, default is 20 (far too late)
 ```
 
@@ -53,94 +56,37 @@ sudo systemctl restart ksmtuned # Restarts
 sudo systemctl enable ksmtuned  # Enables on boot
 ```
 
-### BGP Route Reflector Configuration
-Initially I forgot about cluster-ID configuration and peer-groups when setting up route reflectors. After reading Cisco's SPCORE OCG and white papers of CCNP SP materials, I realized the importance of:
-- Proper cluster-ID assignment to prevent routing loops
-- Using peer-groups for cleaner configuration management
-- Understanding RR client relationships
-
-### eBGP Multihop Issue
-Originally I configured `ebgp-multihop 1` but then realized it wasn't needed since all eBGP peers in Step 03 are directly connected via /31 links. This setting:
-- Overrides default BGP TTL protection of TTL = 1
-- Weakens security by accepting BGP sessions from more than 1 hop away
-- Creates risk on public peering and internet transit sessions
-- Only needed for peering over loopbacks or via intermediate routes
-
-### BGP Community "Additive" Keyword
-Critical discovery: without the `additive` keyword, route communities get replaced instead of appended. This caused major policy issues until I figured out:
-
-```bash
-set community 65001:100 additive    # Appends to existing communities
-set community 65001:100             # Replaces all existing communities
-```
-
-This concept was explained in the Cisco SPCORE OCG.
-
-### Using .0 in /31 Subnets
-Using .0 as base for /31 subnets felt weird and several sources mentioned best practice is to avoid .0 and .255 in addressing schemes. Should consider starting /31 ranges from .2/.3 instead. I refused to change the topology of this lab and rewriting, so I'll remember this for future projects.
-
 ---
 
-## Learning Discoveries
-
-### Bogon Filtering
-Learned the term "bogon filtering", apparently it's supposed to block IP addresses that shouldn't appear on the public internet, like private, reserved, or unallocated IP ranges. In the ENCOR OCG, this concept was glossed over, and they did not call it "Bogon Filtering", but just "route filtering".
+### Design Decisions
 
 ### Cisco "Weight" Attribute
-I refuse to use BGP "weight" attribute since it's Cisco-only and doesn't exist in other vendor implementations. I prefer standard BGP attributes for a vendor-neutral design.
+
+I refuse to use BGP `weight` attribute since it's Cisco-only and doesn't exist in other vendor implementations. I prefer standard BGP attributes for a vendor-neutral design.
 
 ### Adjacency SIDs
-Decided to remove manual Adjacency-SID configuration from the lab. After reading more about TE, found that manual Adj-SIDs are rarely used in real deployments, as OSPF dynamic allocation is usually sufficient, and it got too complex.
+I decided to remove manual Adjacency-SID configuration from the lab. After reading more about TE, found that manual Adj-SIDs are rarely used in real deployments since OSPF dynamic allocation is usually sufficient.
+
+### Addressing Scheme
+Using `.0` as base for /31 subnets felt strange, and I later found out that it is best practice to avoid `.0` and `.255` in addressing schemes. I should have started /31 ranges from `.1/.2` instead, but I didn't want to rewrite the entire topology, again.
 
 ---
 
-## Project Complexity Realizations
+## Project Complexity
 
-### SR-TE Complexity
-My biggest regret was thinking SR-TE would be "simple basics", as it is a small lab, but it turned out it was much more complex than mentioned in the Cisco OCGs. Especially the interaction between:
+### SR-TE Underestimation
+My biggest mistake was thinking SR-TE would be "simple basics" for a small lab. It turned out to be much more complex than expected, especially the interactions between:
 - SR-MPLS label operations
-- Traffic engineering policies  
+- Traffic engineering policies
 - BGP color communities
-- Binding-SID allocation
 - Candidate-path selection
 
-This required several attempts and re-writes to get working correctly due to my limited Service Provider configuration knowledge.
-
-### Monitoring Complexity
-Originally I tried to implement complex telemetry streaming for Step 05 using:
-- XPath filters
-- YANG-push subscriptions
-- gRPC protocol
-- Google Protocol Buffers
-
-Caused too many failures and complexities, and this felt like studying for the CCNP SP, which was outside the lab scope. I've simplified it to basic policy monitoring instead.
+This required multiple complete rewrites to get working correctly, including a new router OS.
 
 ---
 
-## Network Design Decisions
+## Overall Reflection
 
-Removed complex telemetry and focused on basic SR-TE policies that demonstrate the concepts without getting lost in vendor-specific monitoring implementations.
+This lab pushed me. The complexity of integrating multi-site BGP design, Segment Routing MPLS, traffic engineering policies, and business relationship enforcement made me appreciate how deep SP networking actually goes, and how to fully avoid it until I have more practical experience.
 
----
-
-## Wireshark Analysis
-Compared to my previous projects, this one I planned to use Wireshark to measure actual latency differences and packets between:
-- IGP shortest path routing
-- SR-TE premium paths (Color 100)
-- SR-TE standard paths (Color 200)
-
-I did guess that I may see additional delta delay due to SSD/CPU performance in the lab environment compared to actual production hardware.
-
----
-
-## Overall Lab Reflection
-
-This lab pushed me way beyond basic BGP configuration into real Service Provider territory. The complexity of integrating:
-- Multi-site BGP design with route reflectors
-- Segment Routing MPLS implementation
-- Traffic Engineering policies
-- Business relationship enforcement
-
-This made me appreciate the depth of SP networking. While challenging, the hands-on experience with these technologies provided insights you can't get from just reading documentation, or passing some exam.
-
-The multiple configuration iterations and troubleshooting sessions were frustrating but ultimately valuable for understanding how these protocols actually work together in practice.
+The project took significantly longer than expected compared to my other projects, mainly due to the platform migration, constant rewrites, and SR-TE complexity underestimation.

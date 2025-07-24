@@ -6,9 +6,9 @@ annotations:
     rotation: 0
     thickness: 4
     type: rectangle
-    x1: -560.0
+    x1: -600.0
     y1: -360.0
-    x2: 840.0
+    x2: 920.0
     y2: 280.0
     z_index: 0
   - border_color: '#00000000'
@@ -137,59 +137,2660 @@ annotations:
 smart_annotations: []
 nodes:
   - boot_disk_size: null
-    configuration: []
+    configuration:
+      - name: iosxr_config.txt
+        content: |2-
+
+          Thu Jul 24 02:45:28.174 UTC
+          !! Building configuration...
+          !! IOS XR Configuration 24.3.1
+          !! Last configuration change at Thu Jul 24 02:45:26 2025 by cisco
+          !
+          hostname R1_OSLO
+          logging console disable
+          username cisco
+           group root-lr
+           group cisco-support
+           secret 10 $6$DsQxU0CLDcp18U0.$MtRkN53xrJeIuOk/B450o2acOQ8ojdzh0XJUl/LMKyj54LtFhaC8AqPY86mUs45dOsBvo0P9xJyzMJ6.Ppy1M.
+          !
+          line console
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          line default
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          bfd
+           interface GigabitEthernet0/0/0/5
+            multiplier 3
+            rx-interval 50000
+            tx-interval 50000
+           !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ipv4 address 10.255.1.1 255.255.255.255
+           ipv6 enable
+          !
+          interface MgmtEth0/RP0/CPU0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/1
+           description "To CUST1_OSLO"
+           ipv4 address 198.51.100.1 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/2
+           description "To ISP1_OSLO"
+           ipv4 address 192.0.2.0 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/3
+           description "To ISP2_BGO"
+           ipv4 address 192.0.2.2 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/4
+           description "To RR1_OSLO"
+           ipv4 address 192.0.2.8 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/5
+           description "To RR2_BGO"
+           ipv4 address 192.0.2.10 255.255.255.254
+           ipv6 enable
+          !
+          prefix-set CUST1_IN
+            198.51.100.0/25 le 32
+          end-set
+          !
+          prefix-set CUST1_OUT
+            0.0.0.0/0
+          end-set
+          !
+          prefix-set OWN_PREFIXES
+            192.0.2.0/24 le 30,
+            10.255.1.0/24 le 32
+          end-set
+          !
+          prefix-set CUST1_PREFIXES
+            198.51.100.0/25 le 28
+          end-set
+          !
+          community-set CUSTOMER_ROUTES
+            65001:100
+          end-set
+          !
+          community-set UPSTREAM_ROUTES
+            65001:300
+          end-set
+          !
+          route-policy CUST1_IN
+            if destination in CUST1_IN then
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy CUST1_OUT
+            if destination in CUST1_OUT then
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy FROM_ISP1_IN
+            set community (65001:300) additive
+            set local-preference 120
+            pass
+          end-policy
+          !
+          route-policy FROM_ISP2_IN
+            set community (65001:300, 65001:90) additive
+            set local-preference 110
+            pass
+          end-policy
+          !
+          route-policy FROM_CUST1_IN
+            if destination in CUST1_PREFIXES then
+              set community (65001:100) additive
+              set local-preference 300
+              set origin igp
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy TO_CUSTOMER_OUT
+            set community (65001:300) additive
+            pass
+          end-policy
+          !
+          route-policy TO_UPSTREAM_OUT
+            if community matches-any CUSTOMER_ROUTES then
+              set community (65001:100) additive
+              pass
+            elseif destination in OWN_PREFIXES then
+              set community (65001:100) additive
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          router ospf 10
+           router-id 10.255.1.1
+           segment-routing mpls
+           area 0
+            mpls traffic-eng
+            interface Loopback0
+             passive enable
+             prefix-sid index 1
+            !
+            interface GigabitEthernet0/0/0/4
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/5
+             bfd fast-detect
+             network point-to-point
+            !
+           !
+          !
+          router bgp 65001
+           bgp router-id 10.255.1.1
+           bgp log neighbor changes detail
+           address-family ipv4 unicast
+            network 10.255.1.1/32
+           !
+           neighbor 192.0.2.1
+            remote-as 65002
+            description "Upstream to ISP1_OSLO"
+            address-family ipv4 unicast
+             send-community-ebgp
+             route-policy FROM_ISP1_IN in
+             route-policy TO_UPSTREAM_OUT out
+             send-extended-community-ebgp
+            !
+           !
+           neighbor 192.0.2.3
+            remote-as 65002
+            description "Upstream to ISP2_BGO"
+            address-family ipv4 unicast
+             send-community-ebgp
+             route-policy FROM_ISP2_IN in
+             route-policy TO_UPSTREAM_OUT out
+             send-extended-community-ebgp
+            !
+           !
+           neighbor 10.255.1.3
+            remote-as 65001
+            description "RR1_OSLO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 10.255.1.4
+            remote-as 65001
+            description "RR2_BGO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 198.51.100.0
+            remote-as 65003
+            description "Customer CUST1_OSLO"
+            address-family ipv4 unicast
+             maximum-prefix 50 75 restart 5
+             send-community-ebgp
+             route-policy FROM_CUST1_IN in
+             route-policy TO_CUSTOMER_OUT out
+             send-extended-community-ebgp
+             default-originate
+            !
+           !
+          !
+          mpls ldp
+           router-id 10.255.1.1
+           interface GigabitEthernet0/0/0/4
+           !
+           interface GigabitEthernet0/0/0/5
+           !
+          !
+          segment-routing
+           global-block 16000 23999
+           local-block 15000 15999
+           traffic-eng
+            logging
+             policy status
+            !
+            segment-list OSLO_BGO_ALT
+             index 10 mpls label 16012
+             index 20 mpls label 16002
+            !
+            segment-list OSLO_BGO_VIA_RR2
+             index 10 mpls label 16012
+             index 20 mpls label 16002
+            !
+            segment-list OSLO_BGO_STANDARD
+             index 10 mpls label 16011
+             index 20 mpls label 16012
+             index 30 mpls label 16002
+            !
+            segment-list OSLO_BGO_VIA_RR1_RR2
+             index 10 mpls label 16011
+             index 20 mpls label 16012
+             index 30 mpls label 16002
+            !
+            policy OSLO_TO_BGO_STD
+             color 200 end-point ipv4 10.255.1.2
+             candidate-paths
+              preference 50
+               dynamic
+                pcep
+                !
+                metric
+                 type igp
+                !
+               !
+              !
+              preference 90
+               explicit segment-list OSLO_BGO_ALT
+               !
+              !
+              preference 100
+               explicit segment-list OSLO_BGO_STANDARD
+               !
+              !
+             !
+            !
+            policy OSLO_TO_BGO_PREM
+             color 100 end-point ipv4 10.255.1.2
+             candidate-paths
+              preference 80
+               dynamic
+                pcep
+                !
+                metric
+                 type te
+                !
+               !
+              !
+              preference 90
+               explicit segment-list OSLO_BGO_VIA_RR1_RR2
+               !
+              !
+              preference 100
+               explicit segment-list OSLO_BGO_VIA_RR2
+               !
+              !
+             !
+            !
+           !
+          !
+          end
     cpu_limit: null
-    cpus: 2
+    cpus: null
     data_volume: null
     hide_links: false
     id: n0
     image_definition: null
-    label: CUST1_OSLO
-    node_definition: cat8000v
+    label: R1_OSLO
+    node_definition: iosxrv9000
     parameters: {}
     ram: null
     tags: []
-    x: -480
-    y: -200
+    x: -360
+    y: 160
     interfaces:
       - id: i0
         label: Loopback0
         mac_address: null
         type: loopback
       - id: i1
-        label: GigabitEthernet1
+        label: MgmtEth0/RP0/CPU0/0
         mac_address: null
         slot: 0
         type: physical
       - id: i2
-        label: GigabitEthernet2
+        label: donotuse1
         mac_address: null
         slot: 1
         type: physical
       - id: i3
-        label: GigabitEthernet3
+        label: donotuse2
         mac_address: null
         slot: 2
         type: physical
       - id: i4
-        label: GigabitEthernet4
+        label: GigabitEthernet0/0/0/0
         mac_address: null
         slot: 3
         type: physical
+      - id: i5
+        label: GigabitEthernet0/0/0/1
+        mac_address: null
+        slot: 4
+        type: physical
+      - id: i6
+        label: GigabitEthernet0/0/0/2
+        mac_address: null
+        slot: 5
+        type: physical
+      - id: i7
+        label: GigabitEthernet0/0/0/3
+        mac_address: null
+        slot: 6
+        type: physical
+      - id: i8
+        label: GigabitEthernet0/0/0/4
+        mac_address: null
+        slot: 7
+        type: physical
+      - id: i9
+        label: GigabitEthernet0/0/0/5
+        mac_address: null
+        slot: 8
+        type: physical
   - boot_disk_size: null
-    configuration: []
+    configuration:
+      - name: iosxr_config.txt
+        content: |2-
+
+          Thu Jul 24 02:47:43.453 UTC
+          !! Building configuration...
+          !! IOS XR Configuration 24.3.1
+          !! Last configuration change at Thu Jul 24 02:47:42 2025 by cisco
+          !
+          hostname RR1_OSLO
+          logging console disable
+          username cisco
+           group root-lr
+           group cisco-support
+           secret 10 $6$T3ojI1/x9pzGBI1.$owkdgnXknkWHMOjlcU1GChCN0jXBw4SJNmp2RLo/l59MHYFO0mKMKzZuGI15Q.P8qAWGkkRVkqWz.DQsVC886/
+          !
+          line console
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          line default
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          interface Loopback0
+           description "Router-ID"
+           ipv4 address 10.255.1.3 255.255.255.255
+           ipv6 enable
+          !
+          interface MgmtEth0/RP0/CPU0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/1
+           description "To R1_OSLO"
+           ipv4 address 192.0.2.9 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/2
+           description "To CORE1_OSLO"
+           ipv4 address 192.0.2.16 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/3
+           description "To R2_BGO"
+           ipv4 address 192.0.2.13 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/4
+           description "To CORE2_BGO"
+           ipv4 address 192.0.2.18 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/5
+           description "To RR2_BGO"
+           ipv4 address 192.0.2.24 255.255.255.254
+           ipv6 enable
+          !
+          router ospf 10
+           router-id 10.255.1.3
+           segment-routing mpls
+           area 0
+            mpls traffic-eng
+            interface Loopback0
+             passive enable
+             prefix-sid index 11
+            !
+            interface GigabitEthernet0/0/0/1
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/2
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/3
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/4
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/5
+             network point-to-point
+            !
+           !
+          !
+          router bgp 65001
+           bgp router-id 10.255.1.3
+           bgp log neighbor changes detail
+           address-family ipv4 unicast
+            network 10.255.1.3/32
+           !
+           neighbor-group RR-CLIENTS
+            remote-as 65001
+            update-source Loopback0
+            address-family ipv4 unicast
+             route-reflector-client
+            !
+           !
+           neighbor 10.255.1.1
+            use neighbor-group RR-CLIENTS
+            description "R1_OSLO"
+           !
+           neighbor 10.255.1.2
+            use neighbor-group RR-CLIENTS
+            description "R2_BGO"
+           !
+           neighbor 10.255.1.4
+            remote-as 65001
+            description "RR2_BGO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 10.255.1.5
+            use neighbor-group RR-CLIENTS
+            description "CORE1_OSLO"
+           !
+           neighbor 10.255.1.6
+            use neighbor-group RR-CLIENTS
+            description "CORE2_BGO"
+           !
+          !
+          mpls ldp
+           router-id 10.255.1.3
+           interface GigabitEthernet0/0/0/1
+           !
+           interface GigabitEthernet0/0/0/2
+           !
+           interface GigabitEthernet0/0/0/3
+           !
+           interface GigabitEthernet0/0/0/4
+           !
+           interface GigabitEthernet0/0/0/5
+           !
+          !
+          segment-routing
+           global-block 16000 23999
+           local-block 15000 15999
+          !
+          end
     cpu_limit: null
-    cpus: 2
+    cpus: null
     data_volume: null
     hide_links: false
     id: n1
     image_definition: null
-    label: CUST2_BGO
-    node_definition: cat8000v
+    label: RR1_OSLO
+    node_definition: iosxrv9000
     parameters: {}
     ram: null
     tags: []
-    x: 200
+    x: -320
+    y: 320
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: MgmtEth0/RP0/CPU0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: donotuse1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: donotuse2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/0/0/0
+        mac_address: null
+        slot: 3
+        type: physical
+      - id: i5
+        label: GigabitEthernet0/0/0/1
+        mac_address: null
+        slot: 4
+        type: physical
+      - id: i6
+        label: GigabitEthernet0/0/0/2
+        mac_address: null
+        slot: 5
+        type: physical
+      - id: i7
+        label: GigabitEthernet0/0/0/3
+        mac_address: null
+        slot: 6
+        type: physical
+      - id: i8
+        label: GigabitEthernet0/0/0/4
+        mac_address: null
+        slot: 7
+        type: physical
+      - id: i9
+        label: GigabitEthernet0/0/0/5
+        mac_address: null
+        slot: 8
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: iosxr_config.txt
+        content: |2-
+
+          Thu Jul 24 03:49:20.798 UTC
+          !! Building configuration...
+          !! IOS XR Configuration 24.3.1
+          !! Last configuration change at Thu Jul 24 03:49:19 2025 by cisco
+          !
+          hostname CORE2_BGO
+          logging console disable
+          username cisco
+           group root-lr
+           group cisco-support
+           secret 10 $6$MS2vf/5lyOgj4f/.$hCPLxXGGFLMtCC1kcFaSZQXqZ7cEMJv6oKya8ca8WiTffpCSLuseyeBmrhjb.FdHkEJHXRMckSFfD.2jzGcK51
+          !
+          line console
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          line default
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          interface Loopback0
+           description "Router-ID"
+           ipv4 address 10.255.1.6 255.255.255.255
+           ipv6 enable
+          !
+          interface MgmtEth0/RP0/CPU0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/1
+           description "To RR2_BGO"
+           ipv4 address 192.0.2.23 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/2
+           description "To RR1_OSLO"
+           ipv4 address 192.0.2.19 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/3
+           description "To PEER2_BGO"
+           ipv4 address 192.0.2.28 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/4
+           description "To CORE1_OSLO"
+           ipv4 address 198.51.100.7 255.255.255.254
+           ipv6 enable
+          !
+          prefix-set OWN_PREFIXES
+            192.0.2.0/24 le 30,
+            10.255.1.0/24 le 32
+          end-set
+          !
+          prefix-set PEER_PREFIXES
+            203.0.113.0/24 le 30,
+            198.51.100.0/24 le 30
+          end-set
+          !
+          prefix-set BOGON_PREFIXES
+            0.0.0.0/8 le 32,
+            10.0.0.0/8 le 32,
+            127.0.0.0/8 le 32,
+            169.254.0.0/16 le 32,
+            172.16.0.0/12 le 32,
+            192.168.0.0/16 le 32,
+            224.0.0.0/4 le 32,
+            240.0.0.0/4 le 32
+          end-set
+          !
+          community-set PEER_ROUTES
+            65001:200
+          end-set
+          !
+          community-set CUSTOMER_ROUTES
+            65001:100
+          end-set
+          !
+          route-policy TO_PEER_OUT
+            if community matches-any CUSTOMER_ROUTES then
+              set community (65001:200) additive
+              pass
+            elseif destination in OWN_PREFIXES then
+              set community (65001:200) additive
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy FROM_PEER_IN
+            if destination in PEER_PREFIXES and not destination in BOGON_PREFIXES then
+              set community (65001:200) additive
+              set local-preference 200
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          router ospf 10
+           router-id 10.255.1.6
+           segment-routing mpls
+           area 0
+            mpls traffic-eng
+            interface Loopback0
+             passive enable
+             prefix-sid index 22
+            !
+            interface GigabitEthernet0/0/0/1
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/2
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/4
+             network point-to-point
+            !
+           !
+          !
+          router bgp 65001
+           bgp router-id 10.255.1.6
+           bgp log neighbor changes detail
+           address-family ipv4 unicast
+            network 10.255.1.6/32
+           !
+           neighbor 10.255.1.3
+            remote-as 65001
+            description "To RR1_OSLO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 10.255.1.4
+            remote-as 65001
+            description "To RR2_BGO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 192.0.2.29
+            remote-as 65011
+            description "Peer with PEER2_BGO"
+            address-family ipv4 unicast
+             maximum-prefix 1000 75 restart 5
+             send-community-ebgp
+             route-policy FROM_PEER_IN in
+             route-policy TO_PEER_OUT out
+             send-extended-community-ebgp
+            !
+           !
+          !
+          mpls ldp
+           router-id 10.255.1.6
+           interface GigabitEthernet0/0/0/1
+           !
+           interface GigabitEthernet0/0/0/2
+           !
+           interface GigabitEthernet0/0/0/4
+           !
+          !
+          segment-routing
+           global-block 16000 23999
+           local-block 15000 15999
+           traffic-eng
+            logging
+             policy status
+            !
+            segment-list CORE2_VIA_RR
+             index 10 mpls label 16012
+             index 20 mpls label 16011
+             index 30 mpls label 16021
+            !
+            segment-list CORE2_DIRECT_PATH
+             index 10 mpls label 16021
+            !
+            policy CORE2_DIRECT
+             color 300 end-point ipv4 10.255.1.5
+             candidate-paths
+              preference 30
+               dynamic
+                pcep
+                !
+                metric
+                 type te
+                !
+               !
+               constraints
+                disjoint-path group-id 1 type link
+               !
+              !
+              preference 50
+               explicit segment-list CORE2_VIA_RR
+               !
+              !
+              preference 100
+               explicit segment-list CORE2_DIRECT_PATH
+               !
+              !
+             !
+            !
+           !
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n2
+    image_definition: null
+    label: CORE2_BGO
+    node_definition: iosxrv9000
+    parameters: {}
+    ram: null
+    tags: []
+    x: 80
+    y: 520
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: MgmtEth0/RP0/CPU0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: donotuse1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: donotuse2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/0/0/0
+        mac_address: null
+        slot: 3
+        type: physical
+      - id: i5
+        label: GigabitEthernet0/0/0/1
+        mac_address: null
+        slot: 4
+        type: physical
+      - id: i6
+        label: GigabitEthernet0/0/0/2
+        mac_address: null
+        slot: 5
+        type: physical
+      - id: i7
+        label: GigabitEthernet0/0/0/3
+        mac_address: null
+        slot: 6
+        type: physical
+      - id: i8
+        label: GigabitEthernet0/0/0/4
+        mac_address: null
+        slot: 7
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: iosxr_config.txt
+        content: |2-
+
+          Thu Jul 24 02:46:12.969 UTC
+          !! Building configuration...
+          !! IOS XR Configuration 24.3.1
+          !! Last configuration change at Thu Jul 24 02:46:11 2025 by cisco
+          !
+          hostname RR2_BGO
+          logging console disable
+          username cisco
+           group root-lr
+           group cisco-support
+           secret 10 $6$5j4xbfFz7oT0b...$rvjgZpFwVjvYqOVzpf7FAt6jj6yjRzyJfuD4md7ge2gw7.FGOL0joJxc1w9cx/0Kt6E1sJyTzLuKE/MuP/2wg.
+          !
+          line console
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          line default
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          bfd
+           interface GigabitEthernet0/0/0/3
+            multiplier 3
+            rx-interval 50000
+            tx-interval 50000
+           !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ipv4 address 10.255.1.4 255.255.255.255
+           ipv6 enable
+          !
+          interface MgmtEth0/RP0/CPU0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/1
+           description "To R2_BGO"
+           ipv4 address 192.0.2.15 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/2
+           description "To CORE2_BGO"
+           ipv4 address 192.0.2.22 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/3
+           description "To R1_OSLO"
+           ipv4 address 192.0.2.11 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/4
+           description "CORE1_OSLO"
+           ipv4 address 192.0.2.20 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/5
+           description "To RR1_OSLO"
+           ipv4 address 192.0.2.25 255.255.255.254
+           ipv6 enable
+          !
+          router ospf 10
+           router-id 10.255.1.4
+           segment-routing mpls
+           area 0
+            mpls traffic-eng
+            interface Loopback0
+             passive enable
+             prefix-sid index 12
+            !
+            interface GigabitEthernet0/0/0/1
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/2
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/3
+             bfd fast-detect
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/4
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/5
+             network point-to-point
+            !
+           !
+          !
+          router bgp 65001
+           bgp router-id 10.255.1.4
+           bgp log neighbor changes detail
+           address-family ipv4 unicast
+            network 10.255.1.4/32
+           !
+           neighbor-group RR-CLIENTS
+            remote-as 65001
+            update-source Loopback0
+            address-family ipv4 unicast
+             route-reflector-client
+            !
+           !
+           neighbor 10.255.1.1
+            use neighbor-group RR-CLIENTS
+            description "R1_OSLO"
+           !
+           neighbor 10.255.1.2
+            use neighbor-group RR-CLIENTS
+            description "R2_BGO"
+           !
+           neighbor 10.255.1.3
+            remote-as 65001
+            description "RR1_OSLO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 10.255.1.5
+            use neighbor-group RR-CLIENTS
+            description "CORE1_OSLO"
+           !
+           neighbor 10.255.1.6
+            use neighbor-group RR-CLIENTS
+            description "CORE2_BGO"
+           !
+          !
+          mpls ldp
+           router-id 10.255.1.4
+           interface GigabitEthernet0/0/0/1
+           !
+           interface GigabitEthernet0/0/0/2
+           !
+           interface GigabitEthernet0/0/0/3
+           !
+           interface GigabitEthernet0/0/0/4
+           !
+           interface GigabitEthernet0/0/0/5
+           !
+          !
+          segment-routing
+           global-block 16000 23999
+           local-block 15000 15999
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n3
+    image_definition: null
+    label: RR2_BGO
+    node_definition: iosxrv9000
+    parameters: {}
+    ram: null
+    tags: []
+    x: 40
+    y: 320
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: MgmtEth0/RP0/CPU0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: donotuse1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: donotuse2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/0/0/0
+        mac_address: null
+        slot: 3
+        type: physical
+      - id: i5
+        label: GigabitEthernet0/0/0/1
+        mac_address: null
+        slot: 4
+        type: physical
+      - id: i6
+        label: GigabitEthernet0/0/0/2
+        mac_address: null
+        slot: 5
+        type: physical
+      - id: i7
+        label: GigabitEthernet0/0/0/3
+        mac_address: null
+        slot: 6
+        type: physical
+      - id: i8
+        label: GigabitEthernet0/0/0/4
+        mac_address: null
+        slot: 7
+        type: physical
+      - id: i9
+        label: GigabitEthernet0/0/0/5
+        mac_address: null
+        slot: 8
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: iosxr_config.txt
+        content: |2-
+
+          Thu Jul 24 02:47:42.833 UTC
+          !! Building configuration...
+          !! IOS XR Configuration 24.3.1
+          !! Last configuration change at Thu Jul 24 02:47:41 2025 by cisco
+          !
+          hostname R2_BGO
+          logging console disable
+          username cisco
+           group root-lr
+           group cisco-support
+           secret 10 $6$HvioW/i9hMG94W/.$vkdZsz4doTqcLjZSN9RO/ndNud2E9dU0D5EecT/fdrLIjipJaobYHZ6vriFBL8R.WksTasi0qR20VmeweQLSc0
+          !
+          line console
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          line default
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          interface Loopback0
+           description "Router-ID"
+           ipv4 address 10.255.1.2 255.255.255.255
+           ipv6 enable
+          !
+          interface MgmtEth0/RP0/CPU0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/0
+           ipv6 enable
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/1
+           description "To CUST2_BGO"
+           ipv4 address 198.51.100.5 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/2
+           description "To ISP2_BGO"
+           ipv4 address 192.0.2.6 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/3
+           description "To ISP1_OSLO"
+           ipv4 address 192.0.2.4 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/4
+           description "To RR2_BGO"
+           ipv4 address 192.0.2.14 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/5
+           description "To RR1_OSLO"
+           ipv4 address 192.0.2.12 255.255.255.254
+           ipv6 enable
+          !
+          prefix-set CUST2_IN
+            198.51.100.128/25 le 32
+          end-set
+          !
+          prefix-set CUST2_OUT
+            0.0.0.0/0
+          end-set
+          !
+          prefix-set OWN_PREFIXES
+            192.0.2.0/24 le 30,
+            10.255.1.0/24 le 32
+          end-set
+          !
+          prefix-set CUST2_PREFIXES
+            198.51.100.128/25 le 28
+          end-set
+          !
+          community-set CUSTOMER_ROUTES
+            65001:100
+          end-set
+          !
+          community-set UPSTREAM_ROUTES
+            65001:300
+          end-set
+          !
+          route-policy CUST2_IN
+            if destination in CUST2_IN then
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy CUST2_OUT
+            if destination in CUST2_OUT then
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy FROM_CUST2_IN
+            if destination in CUST2_PREFIXES then
+              set community (65001:100) additive
+              set local-preference 300
+              set origin igp
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy FROM_ISP1_IN_R2
+            set community (65001:300, 65001:90) additive
+            set local-preference 110
+            pass
+          end-policy
+          !
+          route-policy FROM_ISP2_IN_R2
+            set community (65001:300) additive
+            set local-preference 120
+            pass
+          end-policy
+          !
+          route-policy TO_CUSTOMER_OUT
+            set community (65001:300) additive
+            pass
+          end-policy
+          !
+          route-policy TO_UPSTREAM_OUT
+            if community matches-any CUSTOMER_ROUTES then
+              set community (65001:100) additive
+              pass
+            elseif destination in OWN_PREFIXES then
+              set community (65001:100) additive
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          router ospf 10
+           router-id 10.255.1.2
+           segment-routing mpls
+           area 0
+            mpls traffic-eng
+            interface Loopback0
+             passive enable
+             prefix-sid index 2
+            !
+            interface GigabitEthernet0/0/0/4
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/5
+             network point-to-point
+            !
+           !
+          !
+          router bgp 65001
+           bgp router-id 10.255.1.2
+           bgp log neighbor changes detail
+           address-family ipv4 unicast
+            network 10.255.1.2/32
+           !
+           neighbor 192.0.2.5
+            remote-as 65002
+            description "Upstream to ISP1_OSLO"
+            address-family ipv4 unicast
+             send-community-ebgp
+             route-policy FROM_ISP1_IN_R2 in
+             route-policy TO_UPSTREAM_OUT out
+             send-extended-community-ebgp
+            !
+           !
+           neighbor 192.0.2.7
+            remote-as 65002
+            description "Upstream to ISP2_BGO"
+            address-family ipv4 unicast
+             send-community-ebgp
+             route-policy FROM_ISP2_IN_R2 in
+             route-policy TO_UPSTREAM_OUT out
+             send-extended-community-ebgp
+            !
+           !
+           neighbor 10.255.1.3
+            remote-as 65001
+            description "To RR1_OSLO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 10.255.1.4
+            remote-as 65001
+            description "To RR2_BGO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 198.51.100.4
+            remote-as 65003
+            description "Customer CUST2_BGO"
+            address-family ipv4 unicast
+             maximum-prefix 50 75 restart 5
+             send-community-ebgp
+             route-policy FROM_CUST2_IN in
+             route-policy TO_CUSTOMER_OUT out
+             send-extended-community-ebgp
+             default-originate
+            !
+           !
+          !
+          mpls ldp
+           router-id 10.255.1.2
+           interface GigabitEthernet0/0/0/4
+           !
+           interface GigabitEthernet0/0/0/5
+           !
+          !
+          segment-routing
+           global-block 16000 23999
+           local-block 15000 15999
+           traffic-eng
+            logging
+             policy status
+            !
+            segment-list BGO_OSLO_ALT
+             index 10 mpls label 16011
+             index 20 mpls label 16001
+            !
+            segment-list BGO_OSLO_VIA_RR1
+             index 10 mpls label 16011
+             index 20 mpls label 16001
+            !
+            segment-list BGO_OSLO_STANDARD
+             index 10 mpls label 16012
+             index 20 mpls label 16011
+             index 30 mpls label 16001
+            !
+            segment-list BGO_OSLO_VIA_RR2_RR1
+             index 10 mpls label 16012
+             index 20 mpls label 16011
+             index 30 mpls label 16001
+            !
+            policy BGO_TO_OSLO_STD
+             color 200 end-point ipv4 10.255.1.1
+             candidate-paths
+              preference 50
+               dynamic
+                pcep
+                !
+                metric
+                 type igp
+                !
+               !
+              !
+              preference 90
+               explicit segment-list BGO_OSLO_ALT
+               !
+              !
+              preference 100
+               explicit segment-list BGO_OSLO_STANDARD
+               !
+              !
+             !
+            !
+            policy BGO_TO_OSLO_PREM
+             color 100 end-point ipv4 10.255.1.1
+             candidate-paths
+              preference 80
+               dynamic
+                pcep
+                !
+                metric
+                 type te
+                !
+               !
+              !
+              preference 90
+               explicit segment-list BGO_OSLO_VIA_RR2_RR1
+               !
+              !
+              preference 100
+               explicit segment-list BGO_OSLO_VIA_RR1
+               !
+              !
+             !
+            !
+           !
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n4
+    image_definition: null
+    label: R2_BGO
+    node_definition: iosxrv9000
+    parameters: {}
+    ram: null
+    tags: []
+    x: 80
+    y: 160
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: MgmtEth0/RP0/CPU0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: donotuse1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: donotuse2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/0/0/0
+        mac_address: null
+        slot: 3
+        type: physical
+      - id: i5
+        label: GigabitEthernet0/0/0/1
+        mac_address: null
+        slot: 4
+        type: physical
+      - id: i6
+        label: GigabitEthernet0/0/0/2
+        mac_address: null
+        slot: 5
+        type: physical
+      - id: i7
+        label: GigabitEthernet0/0/0/3
+        mac_address: null
+        slot: 6
+        type: physical
+      - id: i8
+        label: GigabitEthernet0/0/0/4
+        mac_address: null
+        slot: 7
+        type: physical
+      - id: i9
+        label: GigabitEthernet0/0/0/5
+        mac_address: null
+        slot: 8
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: iosxr_config.txt
+        content: |2-
+
+          Thu Jul 24 03:49:20.855 UTC
+          !! Building configuration...
+          !! IOS XR Configuration 24.3.1
+          !! Last configuration change at Thu Jul 24 03:49:19 2025 by cisco
+          !
+          hostname CORE1_OSLO
+          logging console disable
+          username cisco
+           group root-lr
+           group cisco-support
+           secret 10 $6$OXhy50MfzVuT650.$icf6iWYGhCwUOL5zchdQ2ekRqLOH7AyNgqDOpKENIZ9P21RjZHE6r80VuKov/02xBScrns1mZRsq.qiSJ9q.D0
+          !
+          line console
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          line default
+           exec-timeout 0 0
+           absolute-timeout 0
+           session-timeout 0
+          !
+          interface Loopback0
+           description "Router-ID"
+           ipv4 address 10.255.1.5 255.255.255.255
+           ipv6 enable
+          !
+          interface MgmtEth0/RP0/CPU0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/0
+           shutdown
+          !
+          interface GigabitEthernet0/0/0/1
+           description "To RR1_OSLO"
+           ipv4 address 192.0.2.17 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/2
+           description "To RR2_BGO"
+           ipv4 address 192.0.2.21 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/3
+           description "To PEER1_OSLO"
+           ipv4 address 192.0.2.26 255.255.255.254
+           ipv6 enable
+          !
+          interface GigabitEthernet0/0/0/4
+           description "To CORE2_BGO"
+           ipv4 address 198.51.100.6 255.255.255.254
+           ipv6 enable
+          !
+          prefix-set OWN_PREFIXES
+            192.0.2.0/24 le 30,
+            10.255.1.0/24 le 32
+          end-set
+          !
+          prefix-set PEER_PREFIXES
+            203.0.113.0/24 le 30,
+            198.51.100.0/24 le 30
+          end-set
+          !
+          prefix-set BOGON_PREFIXES
+            0.0.0.0/8 le 32,
+            10.0.0.0/8 le 32,
+            127.0.0.0/8 le 32,
+            169.254.0.0/16 le 32,
+            172.16.0.0/12 le 32,
+            192.168.0.0/16 le 32,
+            224.0.0.0/4 le 32,
+            240.0.0.0/4 le 32
+          end-set
+          !
+          community-set PEER_ROUTES
+            65001:200
+          end-set
+          !
+          community-set CUSTOMER_ROUTES
+            65001:100
+          end-set
+          !
+          route-policy TO_PEER_OUT
+            if community matches-any CUSTOMER_ROUTES then
+              set community (65001:200) additive
+              pass
+            elseif destination in OWN_PREFIXES then
+              set community (65001:200) additive
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          route-policy FROM_PEER_IN
+            if destination in PEER_PREFIXES and not destination in BOGON_PREFIXES then
+              set community (65001:200) additive
+              set local-preference 200
+              pass
+            else
+              drop
+            endif
+          end-policy
+          !
+          router ospf 10
+           router-id 10.255.1.5
+           segment-routing mpls
+           area 0
+            mpls traffic-eng
+            interface Loopback0
+             passive enable
+             prefix-sid index 21
+            !
+            interface GigabitEthernet0/0/0/1
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/2
+             network point-to-point
+            !
+            interface GigabitEthernet0/0/0/4
+             network point-to-point
+            !
+           !
+          !
+          router bgp 65001
+           bgp router-id 10.255.1.5
+           bgp log neighbor changes detail
+           address-family ipv4 unicast
+            network 10.255.1.5/32
+           !
+           neighbor 10.255.1.3
+            remote-as 65001
+            description "RR1_OSLO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 10.255.1.4
+            remote-as 65001
+            description "RR2_BGO"
+            update-source Loopback0
+            address-family ipv4 unicast
+            !
+           !
+           neighbor 192.0.2.27
+            remote-as 65010
+            description "Peer with PEER1_OSLO"
+            address-family ipv4 unicast
+             maximum-prefix 1000 75 restart 5
+             send-community-ebgp
+             route-policy FROM_PEER_IN in
+             route-policy TO_PEER_OUT out
+             send-extended-community-ebgp
+            !
+           !
+          !
+          mpls ldp
+           router-id 10.255.1.5
+           interface GigabitEthernet0/0/0/1
+           !
+           interface GigabitEthernet0/0/0/2
+           !
+           interface GigabitEthernet0/0/0/4
+           !
+          !
+          segment-routing
+           global-block 16000 23999
+           local-block 15000 15999
+           traffic-eng
+            logging
+             policy status
+            !
+            segment-list CORE1_VIA_RR
+             index 10 mpls label 16011
+             index 20 mpls label 16012
+             index 30 mpls label 16022
+            !
+            segment-list CORE1_DIRECT_PATH
+             index 10 mpls label 16022
+            !
+            policy CORE1_DIRECT
+             color 300 end-point ipv4 10.255.1.6
+             candidate-paths
+              preference 30
+               dynamic
+                pcep
+                !
+                metric
+                 type te
+                !
+               !
+              !
+              preference 50
+               explicit segment-list CORE1_VIA_RR
+               !
+              !
+              preference 100
+               explicit segment-list CORE1_DIRECT_PATH
+               !
+              !
+             !
+            !
+           !
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n5
+    image_definition: iosxrv9000-24-3-1
+    label: CORE1_OSLO
+    node_definition: iosxrv9000
+    parameters: {}
+    ram: null
+    tags: []
+    x: -360
+    y: 520
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: MgmtEth0/RP0/CPU0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: donotuse1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: donotuse2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/0/0/0
+        mac_address: null
+        slot: 3
+        type: physical
+      - id: i5
+        label: GigabitEthernet0/0/0/1
+        mac_address: null
+        slot: 4
+        type: physical
+      - id: i6
+        label: GigabitEthernet0/0/0/2
+        mac_address: null
+        slot: 5
+        type: physical
+      - id: i7
+        label: GigabitEthernet0/0/0/3
+        mac_address: null
+        slot: 6
+        type: physical
+      - id: i8
+        label: GigabitEthernet0/0/0/4
+        mac_address: null
+        slot: 7
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          Building configuration...
+
+          Current configuration : 3415 bytes
+          !
+          ! Last configuration change at 01:07:48 UTC Thu Jul 24 2025
+          !
+          version 15.9
+          service timestamps debug datetime msec
+          service timestamps log datetime msec
+          no service password-encryption
+          !
+          hostname PEER1_OSLO
+          !
+          boot-start-marker
+          boot-end-marker
+          !
+          !
+          logging buffered 64000
+          no logging console
+          !
+          no aaa new-model
+          !
+          !
+          !
+          mmi polling-interval 60
+          no mmi auto-configure
+          no mmi pvc
+          mmi snmp-timeout 180
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          ip cef
+          no ipv6 cef
+          !
+          multilink bundle-name authenticated
+          !
+          !
+          !
+          !
+          !
+          redundancy
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          interface Loopback0
+           description "Router-ID 10.255.1.9"
+           ip address 10.255.1.9 255.255.255.255
+          !
+          interface GigabitEthernet0/0
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/1
+           description "Uplink to CORE1_OSLO"
+           ip address 192.0.2.27 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/2
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/3
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          router bgp 65010
+           bgp router-id 10.255.1.9
+           bgp log-neighbor-changes
+           network 10.255.1.9 mask 255.255.255.255
+           neighbor 192.0.2.26 remote-as 65001
+           neighbor 192.0.2.26 description "CORE1_OSLO"
+           neighbor 192.0.2.26 send-community both
+          !
+          ip forward-protocol nd
+          !
+          !
+          no ip http server
+          no ip http secure-server
+          !
+          ipv6 ioam timestamp
+          !
+          !
+          !
+          control-plane
+          !
+          banner exec ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner incoming ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner login ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          !
+          line con 0
+           exec-timeout 0 0
+           logging synchronous
+          line aux 0
+          line vty 0 4
+           exec-timeout 0 0
+           login
+           transport input none
+          !
+          no scheduler allocate
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n6
+    image_definition: null
+    label: PEER1_OSLO
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags: []
+    x: -360
+    y: 680
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        slot: 3
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          Building configuration...
+
+          Current configuration : 3404 bytes
+          !
+          ! Last configuration change at 01:07:48 UTC Thu Jul 24 2025
+          !
+          version 15.9
+          service timestamps debug datetime msec
+          service timestamps log datetime msec
+          no service password-encryption
+          !
+          hostname PEER2_BGO
+          !
+          boot-start-marker
+          boot-end-marker
+          !
+          !
+          logging buffered 64000
+          no logging console
+          !
+          no aaa new-model
+          !
+          !
+          !
+          mmi polling-interval 60
+          no mmi auto-configure
+          no mmi pvc
+          mmi snmp-timeout 180
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          ip cef
+          no ipv6 cef
+          !
+          multilink bundle-name authenticated
+          !
+          !
+          !
+          !
+          !
+          redundancy
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ip address 10.255.1.10 255.255.255.255
+          !
+          interface GigabitEthernet0/0
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/1
+           description "Uplink to CORE2_BGO"
+           ip address 192.0.2.29 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/2
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/3
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          router bgp 65011
+           bgp router-id 10.255.1.10
+           bgp log-neighbor-changes
+           network 10.255.1.10 mask 255.255.255.255
+           neighbor 192.0.2.28 remote-as 65001
+           neighbor 192.0.2.28 description "CORE2_BGO"
+           neighbor 192.0.2.28 send-community both
+          !
+          ip forward-protocol nd
+          !
+          !
+          no ip http server
+          no ip http secure-server
+          !
+          ipv6 ioam timestamp
+          !
+          !
+          !
+          control-plane
+          !
+          banner exec ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner incoming ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner login ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          !
+          line con 0
+           exec-timeout 0 0
+           logging synchronous
+          line aux 0
+          line vty 0 4
+           exec-timeout 0 0
+           login
+           transport input none
+          !
+          no scheduler allocate
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n7
+    image_definition: null
+    label: PEER2_BGO
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags: []
+    x: 80
+    y: 680
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        slot: 3
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          Building configuration...
+
+          Current configuration : 3537 bytes
+          !
+          ! Last configuration change at 01:07:49 UTC Thu Jul 24 2025
+          !
+          version 15.9
+          service timestamps debug datetime msec
+          service timestamps log datetime msec
+          no service password-encryption
+          !
+          hostname ISP2_BGO
+          !
+          boot-start-marker
+          boot-end-marker
+          !
+          !
+          logging buffered 64000
+          no logging console
+          !
+          no aaa new-model
+          !
+          !
+          !
+          mmi polling-interval 60
+          no mmi auto-configure
+          no mmi pvc
+          mmi snmp-timeout 180
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          ip cef
+          no ipv6 cef
+          !
+          multilink bundle-name authenticated
+          !
+          !
+          !
+          !
+          !
+          redundancy
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ip address 10.255.1.8 255.255.255.255
+          !
+          interface GigabitEthernet0/0
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/1
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/2
+           description "To R2_BGO"
+           ip address 192.0.2.7 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/3
+           description "R1_OSLO"
+           ip address 192.0.2.3 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          router bgp 65002
+           bgp router-id 10.255.1.8
+           bgp log-neighbor-changes
+           network 10.255.1.8 mask 255.255.255.255
+           neighbor 192.0.2.2 remote-as 65001
+           neighbor 192.0.2.2 description "R1_OSLO"
+           neighbor 192.0.2.2 send-community both
+           neighbor 192.0.2.6 remote-as 65001
+           neighbor 192.0.2.6 description "R2_BGO"
+           neighbor 192.0.2.6 send-community both
+          !
+          ip forward-protocol nd
+          !
+          !
+          no ip http server
+          no ip http secure-server
+          !
+          ipv6 ioam timestamp
+          !
+          !
+          !
+          control-plane
+          !
+          banner exec ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner incoming ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner login ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          !
+          line con 0
+           exec-timeout 0 0
+           logging synchronous
+          line aux 0
+          line vty 0 4
+           exec-timeout 0 0
+           login
+           transport input none
+          !
+          no scheduler allocate
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n8
+    image_definition: null
+    label: ISP2_BGO
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags: []
+    x: 40
+    y: -40
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        slot: 3
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          Building configuration...
+
+          Current configuration : 3541 bytes
+          !
+          ! Last configuration change at 01:07:49 UTC Thu Jul 24 2025
+          !
+          version 15.9
+          service timestamps debug datetime msec
+          service timestamps log datetime msec
+          no service password-encryption
+          !
+          hostname ISP1_OSLO
+          !
+          boot-start-marker
+          boot-end-marker
+          !
+          !
+          logging buffered 64000
+          no logging console
+          !
+          no aaa new-model
+          !
+          !
+          !
+          mmi polling-interval 60
+          no mmi auto-configure
+          no mmi pvc
+          mmi snmp-timeout 180
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          ip cef
+          no ipv6 cef
+          !
+          multilink bundle-name authenticated
+          !
+          !
+          !
+          !
+          !
+          redundancy
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ip address 10.255.1.7 255.255.255.255
+          !
+          interface GigabitEthernet0/0
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/1
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/2
+           description "To R1_OSLO"
+           ip address 192.0.2.1 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/3
+           description "To R2_BGO"
+           ip address 192.0.2.5 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          router bgp 65002
+           bgp router-id 10.255.1.7
+           bgp log-neighbor-changes
+           network 10.255.1.7 mask 255.255.255.255
+           neighbor 192.0.2.0 remote-as 65001
+           neighbor 192.0.2.0 description "R1_OSLO"
+           neighbor 192.0.2.0 send-community both
+           neighbor 192.0.2.4 remote-as 65001
+           neighbor 192.0.2.4 description "R2_BGO"
+           neighbor 192.0.2.4 send-community both
+          !
+          ip forward-protocol nd
+          !
+          !
+          no ip http server
+          no ip http secure-server
+          !
+          ipv6 ioam timestamp
+          !
+          !
+          !
+          control-plane
+          !
+          banner exec ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner incoming ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner login ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          !
+          line con 0
+           exec-timeout 0 0
+           logging synchronous
+          line aux 0
+          line vty 0 4
+           exec-timeout 0 0
+           login
+           transport input none
+          !
+          no scheduler allocate
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n9
+    image_definition: null
+    label: ISP1_OSLO
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags: []
+    x: -320
+    y: -40
+    interfaces:
+      - id: i0
+        label: Loopback0
+        mac_address: null
+        type: loopback
+      - id: i1
+        label: GigabitEthernet0/0
+        mac_address: null
+        slot: 0
+        type: physical
+      - id: i2
+        label: GigabitEthernet0/1
+        mac_address: null
+        slot: 1
+        type: physical
+      - id: i3
+        label: GigabitEthernet0/2
+        mac_address: null
+        slot: 2
+        type: physical
+      - id: i4
+        label: GigabitEthernet0/3
+        mac_address: null
+        slot: 3
+        type: physical
+  - boot_disk_size: null
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          Building configuration...
+
+          Current configuration : 3585 bytes
+          !
+          ! Last configuration change at 01:07:50 UTC Thu Jul 24 2025
+          !
+          version 15.9
+          service timestamps debug datetime msec
+          service timestamps log datetime msec
+          no service password-encryption
+          !
+          hostname CUST1_OSLO
+          !
+          boot-start-marker
+          boot-end-marker
+          !
+          !
+          logging buffered 64000
+          no logging console
+          !
+          no aaa new-model
+          !
+          !
+          !
+          mmi polling-interval 60
+          no mmi auto-configure
+          no mmi pvc
+          mmi snmp-timeout 180
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          ip cef
+          no ipv6 cef
+          !
+          multilink bundle-name authenticated
+          !
+          !
+          !
+          !
+          !
+          redundancy
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ip address 10.255.1.11 255.255.255.255
+          !
+          interface GigabitEthernet0/0
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/1
+           description "To CUST_CORE_OSLO"
+           ip address 198.51.100.2 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/2
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/3
+           description "To R1_OSLO"
+           ip address 198.51.100.0 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          router bgp 65003
+           bgp router-id 10.255.1.11
+           bgp log-neighbor-changes
+           network 10.255.1.11 mask 255.255.255.255
+           neighbor 198.51.100.1 remote-as 65001
+           neighbor 198.51.100.1 description "R1_OSLO"
+           neighbor 198.51.100.1 send-community both
+           neighbor 198.51.100.3 remote-as 65003
+           neighbor 198.51.100.3 description "CUST_CORE_OSLO"
+           neighbor 198.51.100.3 send-community both
+          !
+          ip forward-protocol nd
+          !
+          !
+          no ip http server
+          no ip http secure-server
+          !
+          ipv6 ioam timestamp
+          !
+          !
+          !
+          control-plane
+          !
+          banner exec ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner incoming ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner login ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          !
+          line con 0
+           exec-timeout 0 0
+           logging synchronous
+          line aux 0
+          line vty 0 4
+           exec-timeout 0 0
+           login
+           transport input none
+          !
+          no scheduler allocate
+          !
+          end
+    cpu_limit: null
+    cpus: null
+    data_volume: null
+    hide_links: false
+    id: n10
+    image_definition: null
+    label: CUST1_OSLO
+    node_definition: iosv
+    parameters: {}
+    ram: null
+    tags: []
+    x: -520
     y: -200
     interfaces:
       - id: i0
@@ -197,35 +2798,196 @@ nodes:
         mac_address: null
         type: loopback
       - id: i1
-        label: GigabitEthernet1
+        label: GigabitEthernet0/0
         mac_address: null
         slot: 0
         type: physical
       - id: i2
-        label: GigabitEthernet2
+        label: GigabitEthernet0/1
         mac_address: null
         slot: 1
         type: physical
       - id: i3
-        label: GigabitEthernet3
+        label: GigabitEthernet0/2
         mac_address: null
         slot: 2
         type: physical
       - id: i4
-        label: GigabitEthernet4
+        label: GigabitEthernet0/3
         mac_address: null
         slot: 3
         type: physical
   - boot_disk_size: null
-    configuration: []
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          Building configuration...
+
+          Current configuration : 3583 bytes
+          !
+          ! Last configuration change at 01:07:49 UTC Thu Jul 24 2025
+          !
+          version 15.9
+          service timestamps debug datetime msec
+          service timestamps log datetime msec
+          no service password-encryption
+          !
+          hostname CUST_CORE_OSLO
+          !
+          boot-start-marker
+          boot-end-marker
+          !
+          !
+          logging buffered 64000
+          no logging console
+          !
+          no aaa new-model
+          !
+          !
+          !
+          mmi polling-interval 60
+          no mmi auto-configure
+          no mmi pvc
+          mmi snmp-timeout 180
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          ip cef
+          no ipv6 cef
+          !
+          multilink bundle-name authenticated
+          !
+          !
+          !
+          !
+          !
+          redundancy
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ip address 10.255.1.13 255.255.255.255
+          !
+          interface GigabitEthernet0/0
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/1
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/2
+           description "CUST1_OSLO"
+           ip address 198.51.100.3 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/3
+           description "To CUST2_BGO"
+           ip address 198.51.100.9 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          router bgp 65003
+           bgp router-id 10.255.1.13
+           bgp log-neighbor-changes
+           network 10.255.1.13 mask 255.255.255.255
+           neighbor 198.51.100.2 remote-as 65003
+           neighbor 198.51.100.2 description "CUST1_OSLO"
+           neighbor 198.51.100.2 send-community both
+           neighbor 198.51.100.8 remote-as 65003
+           neighbor 198.51.100.8 description "CUST2_OSLO"
+           neighbor 198.51.100.8 send-community both
+          !
+          ip forward-protocol nd
+          !
+          !
+          no ip http server
+          no ip http secure-server
+          !
+          ipv6 ioam timestamp
+          !
+          !
+          !
+          control-plane
+          !
+          banner exec ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner incoming ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner login ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          !
+          line con 0
+           exec-timeout 0 0
+           logging synchronous
+          line aux 0
+          line vty 0 4
+           exec-timeout 0 0
+           login
+           transport input none
+          !
+          no scheduler allocate
+          !
+          end
     cpu_limit: null
-    cpus: 2
+    cpus: null
     data_volume: null
     hide_links: false
-    id: n2
+    id: n11
     image_definition: null
     label: CUST_CORE_OSLO
-    node_definition: cat8000v
+    node_definition: iosv
     parameters: {}
     ram: null
     tags: []
@@ -237,591 +2999,367 @@ nodes:
         mac_address: null
         type: loopback
       - id: i1
-        label: GigabitEthernet1
+        label: GigabitEthernet0/0
         mac_address: null
         slot: 0
         type: physical
       - id: i2
-        label: GigabitEthernet2
+        label: GigabitEthernet0/1
         mac_address: null
         slot: 1
         type: physical
       - id: i3
-        label: GigabitEthernet3
+        label: GigabitEthernet0/2
         mac_address: null
         slot: 2
         type: physical
       - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-      - id: i5
-        label: GigabitEthernet5
-        mac_address: null
-        slot: 4
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n3
-    image_definition: null
-    label: R1_OSLO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: -360
-    y: 160
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-      - id: i5
-        label: GigabitEthernet5
-        mac_address: null
-        slot: 4
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n4
-    image_definition: null
-    label: ISP1_OSLO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: -320
-    y: -40
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
+        label: GigabitEthernet0/3
         mac_address: null
         slot: 3
         type: physical
   - boot_disk_size: null
-    configuration: []
+    configuration:
+      - name: ios_config.txt
+        content: |-
+          Building configuration...
+
+          Current configuration : 3582 bytes
+          !
+          ! Last configuration change at 01:07:48 UTC Thu Jul 24 2025
+          !
+          version 15.9
+          service timestamps debug datetime msec
+          service timestamps log datetime msec
+          no service password-encryption
+          !
+          hostname CUST2_BGO
+          !
+          boot-start-marker
+          boot-end-marker
+          !
+          !
+          logging buffered 64000
+          no logging console
+          !
+          no aaa new-model
+          !
+          !
+          !
+          mmi polling-interval 60
+          no mmi auto-configure
+          no mmi pvc
+          mmi snmp-timeout 180
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          ip cef
+          no ipv6 cef
+          !
+          multilink bundle-name authenticated
+          !
+          !
+          !
+          !
+          !
+          redundancy
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          !
+          interface Loopback0
+           description "Router-ID"
+           ip address 10.255.1.12 255.255.255.255
+          !
+          interface GigabitEthernet0/0
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/1
+           description "To CUST_CORE_OSLO"
+           ip address 198.51.100.8 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/2
+           no ip address
+           shutdown
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          interface GigabitEthernet0/3
+           description "To R2_BGO"
+           ip address 198.51.100.4 255.255.255.254
+           duplex auto
+           speed auto
+           media-type rj45
+          !
+          router bgp 65003
+           bgp router-id 10.255.1.12
+           bgp log-neighbor-changes
+           network 10.255.1.12 mask 255.255.255.255
+           neighbor 198.51.100.5 remote-as 65001
+           neighbor 198.51.100.5 description "R2_BGO"
+           neighbor 198.51.100.5 send-community both
+           neighbor 198.51.100.9 remote-as 65003
+           neighbor 198.51.100.9 description "CUST_CORE_OSLO"
+           neighbor 198.51.100.9 send-community both
+          !
+          ip forward-protocol nd
+          !
+          !
+          no ip http server
+          no ip http secure-server
+          !
+          ipv6 ioam timestamp
+          !
+          !
+          !
+          control-plane
+          !
+          banner exec ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner incoming ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          banner login ^C
+          **************************************************************************
+          * IOSv is strictly limited to use for evaluation, demonstration and IOS  *
+          * education. IOSv is provided as-is and is not supported by Cisco's      *
+          * Technical Advisory Center. Any use or disclosure, in whole or in part, *
+          * of the IOSv Software or Documentation to any third party for any       *
+          * purposes is expressly prohibited except as otherwise authorized by     *
+          * Cisco in writing.                                                      *
+          **************************************************************************^C
+          !
+          line con 0
+           exec-timeout 0 0
+           logging synchronous
+          line aux 0
+          line vty 0 4
+           exec-timeout 0 0
+           login
+           transport input none
+          !
+          no scheduler allocate
+          !
+          end
     cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n5
-    image_definition: null
-    label: ISP2_BGO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: 40
-    y: -40
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n6
-    image_definition: null
-    label: R2_BGO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: 80
-    y: 160
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-      - id: i5
-        label: GigabitEthernet5
-        mac_address: null
-        slot: 4
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n7
-    image_definition: null
-    label: RR1_OSLO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: -320
-    y: 320
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-      - id: i5
-        label: GigabitEthernet5
-        mac_address: null
-        slot: 4
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n8
-    image_definition: null
-    label: RR2_BGO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: 40
-    y: 320
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-      - id: i5
-        label: GigabitEthernet5
-        mac_address: null
-        slot: 4
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n9
-    image_definition: null
-    label: CORE1_OSLO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: -360
-    y: 520
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n10
-    image_definition: null
-    label: CORE2_BGO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: 80
-    y: 520
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
-    data_volume: null
-    hide_links: false
-    id: n11
-    image_definition: null
-    label: PEER1_OSLO
-    node_definition: cat8000v
-    parameters: {}
-    ram: null
-    tags: []
-    x: -360
-    y: 680
-    interfaces:
-      - id: i0
-        label: Loopback0
-        mac_address: null
-        type: loopback
-      - id: i1
-        label: GigabitEthernet1
-        mac_address: null
-        slot: 0
-        type: physical
-      - id: i2
-        label: GigabitEthernet2
-        mac_address: null
-        slot: 1
-        type: physical
-      - id: i3
-        label: GigabitEthernet3
-        mac_address: null
-        slot: 2
-        type: physical
-      - id: i4
-        label: GigabitEthernet4
-        mac_address: null
-        slot: 3
-        type: physical
-  - boot_disk_size: null
-    configuration: []
-    cpu_limit: null
-    cpus: 2
+    cpus: null
     data_volume: null
     hide_links: false
     id: n12
     image_definition: null
-    label: PEER2_BGO
-    node_definition: cat8000v
+    label: CUST2_BGO
+    node_definition: iosv
     parameters: {}
     ram: null
     tags: []
-    x: 80
-    y: 680
+    x: 240
+    y: -200
     interfaces:
       - id: i0
         label: Loopback0
         mac_address: null
         type: loopback
       - id: i1
-        label: GigabitEthernet1
+        label: GigabitEthernet0/0
         mac_address: null
         slot: 0
         type: physical
       - id: i2
-        label: GigabitEthernet2
+        label: GigabitEthernet0/1
         mac_address: null
         slot: 1
         type: physical
       - id: i3
-        label: GigabitEthernet3
+        label: GigabitEthernet0/2
         mac_address: null
         slot: 2
         type: physical
       - id: i4
-        label: GigabitEthernet4
+        label: GigabitEthernet0/3
         mac_address: null
         slot: 3
         type: physical
 links:
   - id: l0
-    n1: n2
-    n2: n0
-    i1: i2
-    i2: i1
-    conditioning: {}
-    label: CUST_CORE_OSLO-GigabitEthernet2<->CUST1_OSLO-GigabitEthernet1
-  - id: l1
-    n1: n2
+    n1: n0
     n2: n1
-    i1: i3
-    i2: i1
+    i1: i8
+    i2: i5
     conditioning: {}
-    label: CUST_CORE_OSLO-GigabitEthernet3<->CUST2_BGO-GigabitEthernet1
-  - id: l2
+    label: R1_OSLO-GigabitEthernet0/0/0/4<->RR1_OSLO-GigabitEthernet0/0/0/1
+  - id: l1
     n1: n0
     n2: n3
-    i1: i3
-    i2: i1
+    i1: i9
+    i2: i7
     conditioning: {}
-    label: CUST1_OSLO-GigabitEthernet3<->R1_OSLO-GigabitEthernet1
+    label: R1_OSLO-GigabitEthernet0/0/0/5<->RR2_BGO-GigabitEthernet0/0/0/3
+  - id: l2
+    n1: n4
+    n2: n1
+    i1: i9
+    i2: i7
+    conditioning: {}
+    label: R2_BGO-GigabitEthernet0/0/0/5<->RR1_OSLO-GigabitEthernet0/0/0/3
   - id: l3
-    n1: n1
-    n2: n6
-    i1: i3
-    i2: i1
-    conditioning: {}
-    label: CUST2_BGO-GigabitEthernet3<->R2_BGO-GigabitEthernet1
-  - id: l4
     n1: n4
     n2: n3
-    i1: i2
-    i2: i2
+    i1: i8
+    i2: i5
     conditioning: {}
-    label: ISP1_OSLO-GigabitEthernet2<->R1_OSLO-GigabitEthernet2
+    label: R2_BGO-GigabitEthernet0/0/0/4<->RR2_BGO-GigabitEthernet0/0/0/1
+  - id: l4
+    n1: n3
+    n2: n2
+    i1: i6
+    i2: i5
+    conditioning: {}
+    label: RR2_BGO-GigabitEthernet0/0/0/2<->CORE2_BGO-GigabitEthernet0/0/0/1
   - id: l5
-    n1: n5
-    n2: n6
-    i1: i2
-    i2: i2
-    conditioning: {}
-    label: ISP2_BGO-GigabitEthernet2<->R2_BGO-GigabitEthernet2
-  - id: l6
     n1: n3
     n2: n5
-    i1: i3
-    i2: i3
+    i1: i8
+    i2: i6
     conditioning: {}
-    label: R1_OSLO-GigabitEthernet3<->ISP2_BGO-GigabitEthernet3
+    label: RR2_BGO-GigabitEthernet0/0/0/4<->CORE1_OSLO-GigabitEthernet0/0/0/2
+  - id: l6
+    n1: n1
+    n2: n3
+    i1: i9
+    i2: i9
+    conditioning: {}
+    label: RR1_OSLO-GigabitEthernet0/0/0/5<->RR2_BGO-GigabitEthernet0/0/0/5
   - id: l7
-    n1: n6
+    n1: n1
+    n2: n2
+    i1: i8
+    i2: i6
+    conditioning: {}
+    label: RR1_OSLO-GigabitEthernet0/0/0/4<->CORE2_BGO-GigabitEthernet0/0/0/2
+  - id: l8
+    n1: n1
+    n2: n5
+    i1: i6
+    i2: i5
+    conditioning: {}
+    label: RR1_OSLO-GigabitEthernet0/0/0/2<->CORE1_OSLO-GigabitEthernet0/0/0/1
+  - id: l9
+    n1: n5
+    n2: n2
+    i1: i8
+    i2: i8
+    conditioning: {}
+    label: CORE1_OSLO-GigabitEthernet0/0/0/4<->CORE2_BGO-GigabitEthernet0/0/0/4
+  - id: l10
+    n1: n2
+    n2: n7
+    i1: i7
+    i2: i2
+    conditioning: {}
+    label: CORE2_BGO-GigabitEthernet0/0/0/3<->PEER2_BGO-GigabitEthernet0/1
+  - id: l11
+    n1: n5
+    n2: n6
+    i1: i7
+    i2: i2
+    conditioning: {}
+    label: CORE1_OSLO-GigabitEthernet0/0/0/3<->PEER1_OSLO-GigabitEthernet0/1
+  - id: l12
+    n1: n8
     n2: n4
     i1: i3
-    i2: i3
+    i2: i6
     conditioning: {}
-    label: R2_BGO-GigabitEthernet3<->ISP1_OSLO-GigabitEthernet3
-  - id: l8
-    n1: n3
-    n2: n7
-    i1: i4
-    i2: i1
-    conditioning: {}
-    label: R1_OSLO-GigabitEthernet4<->RR1_OSLO-GigabitEthernet1
-  - id: l9
-    n1: n6
-    n2: n8
-    i1: i4
-    i2: i1
-    conditioning: {}
-    label: R2_BGO-GigabitEthernet4<->RR2_BGO-GigabitEthernet1
-  - id: l10
-    n1: n7
-    n2: n9
-    i1: i2
-    i2: i1
-    conditioning: {}
-    label: RR1_OSLO-GigabitEthernet2<->CORE1_OSLO-GigabitEthernet1
-  - id: l11
-    n1: n8
-    n2: n10
-    i1: i2
-    i2: i1
-    conditioning: {}
-    label: RR2_BGO-GigabitEthernet2<->CORE2_BGO-GigabitEthernet1
-  - id: l12
-    n1: n7
-    n2: n6
-    i1: i3
-    i2: i5
-    conditioning: {}
-    label: RR1_OSLO-GigabitEthernet3<->R2_BGO-GigabitEthernet5
+    label: ISP2_BGO-GigabitEthernet0/2<->R2_BGO-GigabitEthernet0/0/0/2
   - id: l13
     n1: n8
-    n2: n3
-    i1: i3
-    i2: i5
+    n2: n0
+    i1: i4
+    i2: i7
     conditioning: {}
-    label: RR2_BGO-GigabitEthernet3<->R1_OSLO-GigabitEthernet5
+    label: ISP2_BGO-GigabitEthernet0/3<->R1_OSLO-GigabitEthernet0/0/0/3
   - id: l14
     n1: n9
-    n2: n8
-    i1: i2
-    i2: i4
+    n2: n0
+    i1: i3
+    i2: i6
     conditioning: {}
-    label: CORE1_OSLO-GigabitEthernet2<->RR2_BGO-GigabitEthernet4
+    label: ISP1_OSLO-GigabitEthernet0/2<->R1_OSLO-GigabitEthernet0/0/0/2
   - id: l15
-    n1: n10
-    n2: n7
+    n1: n9
+    n2: n4
+    i1: i4
+    i2: i7
+    conditioning: {}
+    label: ISP1_OSLO-GigabitEthernet0/3<->R2_BGO-GigabitEthernet0/0/0/3
+  - id: l16
+    n1: n0
+    n2: n10
+    i1: i5
+    i2: i4
+    conditioning: {}
+    label: R1_OSLO-GigabitEthernet0/0/0/1<->CUST1_OSLO-GigabitEthernet0/3
+  - id: l17
+    n1: n4
+    n2: n12
+    i1: i5
+    i2: i4
+    conditioning: {}
+    label: R2_BGO-GigabitEthernet0/0/0/1<->CUST2_BGO-GigabitEthernet0/3
+  - id: l18
+    n1: n12
+    n2: n11
     i1: i2
     i2: i4
     conditioning: {}
-    label: CORE2_BGO-GigabitEthernet2<->RR1_OSLO-GigabitEthernet4
-  - id: l16
-    n1: n9
-    n2: n11
-    i1: i3
-    i2: i1
-    conditioning: {}
-    label: CORE1_OSLO-GigabitEthernet3<->PEER1_OSLO-GigabitEthernet1
-  - id: l17
-    n1: n10
-    n2: n12
-    i1: i3
-    i2: i1
-    conditioning: {}
-    label: CORE2_BGO-GigabitEthernet3<->PEER2_BGO-GigabitEthernet1
-  - id: l18
-    n1: n9
-    n2: n10
-    i1: i4
-    i2: i4
-    conditioning: {}
-    label: CORE1_OSLO-GigabitEthernet4<->CORE2_BGO-GigabitEthernet4
+    label: CUST2_BGO-GigabitEthernet0/1<->CUST_CORE_OSLO-GigabitEthernet0/3
   - id: l19
-    n1: n7
-    n2: n8
-    i1: i5
-    i2: i5
+    n1: n10
+    n2: n11
+    i1: i2
+    i2: i3
     conditioning: {}
-    label: RR1_OSLO-GigabitEthernet5<->RR2_BGO-GigabitEthernet5
+    label: CUST1_OSLO-GigabitEthernet0/1<->CUST_CORE_OSLO-GigabitEthernet0/2
 lab:
   description: ''
   notes: ''

@@ -34,22 +34,16 @@ This document defines the Segment Routing Traffic Engineering (SR-TE) policy cat
 **OSLO_TO_BGO_PREM (R1_OSLO -> R2_BGO):**
 
 ```bash
-Primary Path (Preference 100): [16012, 16002]
 - R1_OSLO -> RR2_BGO -> R2_BGO (shortest path)
 
-Backup Path (Preference 90): [16011, 16012, 16002]  
 - R1_OSLO -> RR1_OSLO -> RR2_BGO -> R2_BGO
-
-Dynamic Fallback (Preference 80): TE-optimized dynamic computation
 ```
 
 **BGO_TO_OSLO_PREM (R2_BGO -> R1_OSLO):**
 
 ```bash
-Primary Path (Preference 100): [16011, 16001]
 - R2_BGO -> RR1_OSLO -> R1_OSLO (shortest path)
 
-Backup Path (Preference 90): [16012, 16011, 16001]
 - R2_BGO -> RR2_BGO -> RR1_OSLO -> R1_OSLO
 ```
 
@@ -58,22 +52,16 @@ Backup Path (Preference 90): [16012, 16011, 16001]
 **OSLO_TO_BGO_STD (R1_OSLO -> R2_BGO):**
 
 ```bash
-Primary Path (Preference 100): [16011, 16012, 16002]
 - R1_OSLO -> RR1_OSLO -> RR2_BGO -> R2_BGO (load balanced)
 
-Alternate Path (Preference 90): [16012, 16002]
 - R1_OSLO -> RR2_BGO -> R2_BGO (direct to RR2)
-
-Dynamic Fallback (Preference 50): IGP-optimized dynamic computation
 ```
 
 **BGO_TO_OSLO_STD (R2_BGO -> R1_OSLO):**
 
 ```bash
-Primary Path (Preference 100): [16012, 16011, 16001]
 - R2_BGO -> RR2_BGO -> RR1_OSLO -> R1_OSLO (load balanced)
 
-Alternate Path (Preference 90): [16011, 16001]
 - R2_BGO -> RR1_OSLO -> R1_OSLO (direct to RR1)
 ```
 
@@ -82,20 +70,15 @@ Alternate Path (Preference 90): [16011, 16001]
 **CORE_DIRECT (CORE1_OSLO -> CORE2_BGO):**
 
 ```bash
-Primary Path (Preference 100): [16022]
 - CORE1_OSLO -> CORE2_BGO (direct link)
 
-Backup Path (Preference 50): [16011, 16012, 16022]
 - CORE1_OSLO -> RR1_OSLO -> RR2_BGO -> CORE2_BGO (via RR infrastructure)
 ```
 
 **CORE_BACKUP (CORE2_BGO -> CORE1_OSLO):**
 
 ```bash
-Primary Path (Preference 100): [16012, 16011, 16021]
 - CORE2_BGO -> RR2_BGO -> RR1_OSLO -> CORE1_OSLO (backup path via RRs)
-
-Emergency Dynamic Path (Preference 50): TE-optimized with link disjoint constraints
 ```
 
 ---
@@ -121,24 +104,11 @@ Emergency Dynamic Path (Preference 50): TE-optimized with link disjoint constrai
 
 ---
 
-## Policy Monitoring
-
-Monitor policy status and activation:
-
-```bash
-show segment-routing traffic-eng policy all
-show segment-routing traffic-eng policy name OSLO_TO_BGO_PREM detail
-show segment-routing traffic-eng binding-sid
-show mpls forwarding-table labels 15100 15999
-```
-
----
-
 ## Path Selection Logic
 
 The candidate-path preferences are designed to:
 1. **Preference 100**: Use optimal paths for each service class
 2. **Preference 90**: Provide backup paths with different routing
-3. **Preference 50-80**: Dynamic computation fallbacks for resilience
+3. **Preference 30-80**: Dynamic computation fallbacks for resilience
 
 This ensures that the traffic follows the predicted paths under normal conditions, while maintaining automatic failover capabilities during a network failure.

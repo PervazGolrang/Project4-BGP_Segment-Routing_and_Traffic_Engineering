@@ -1,11 +1,11 @@
 # Project 4 - Segment Routing & Traffic Engineering
 
-This repository contains a realistic dual‑site service‑provider topology implemented entirely with **Cat8000v 17.15.01a** images, using Segment Routing MPLS and traffic engineering on CML-2.8.1. The environment demonstrates how a regional ISP (AS 65001) can deliver deterministic traffic engineering, rapid fail‑over, and cost‑optimised peering.
+This repository contains a realistic dual‑site service‑provider topology implemented entirely with **IOS XRv 9000v 24.3.1** images, using Segment Routing MPLS and traffic engineering on CML-2.8.1. The environment demonstrates how a regional ISP (AS 65001) can deliver deterministic traffic engineering, rapid fail‑over, and cost‑optimised peering.
 
 ---
 
 ## What This Lab Does
-This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs): **Oslo** and **Bergen**, to learn how real service providers work. Each PoP provides paid transit, public peering, and dual‑stack connectivity for a customer network that is also present in both cities. The lab covers:
+This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs): **Oslo** and **Bergen**, to learn how real service providers work. Each PoP provides paid transit and public peering for a customer network that is also present in both cities. The lab covers:
 
 - **BGP route reflection** - scaling iBGP without full mesh
 - **Segment Routing MPLS** - modern traffic engineering
@@ -35,11 +35,11 @@ This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs
 
 ## Lab Requirements
 
-| Component   | Requirement            | Notes                                 |
-| ----------- | ---------------------- | ------------------------------------- |
-| RAM         | 21GB+ with KSM         | 13 routers, ~4GB each                 |
-| vCPU        | 13+ vCPUs              | 1 vCPU minimum, 2 vCPU recommended    |
-| Platform    | CML-2.8.1 or EVE-NG    | Cat8000v 17.15.01a image              |
+| Component   | Requirement                       | Notes                                                 |
+| ----------- | --------------------------------- | ----------------------------------------------------- |
+| RAM         | 64GB with KSM, 180GB without KSM  | 13 routers, ~4GB each                                 |
+| vCPU        | 28+ vCPUs                         | 4 vCPU recommended per core node, 1 vCPU per non-core |
+| Platform    | CML-2.8.1 or EVE-NG               | IOS XRv 9000v 24.3.1, IOSv images                     |
 
 Refer to [`notes.md`](/notes.md) to tune and enable KSM on CML. Do note it would take up to 15 minutes to fully complete the memory de-duplication.
 
@@ -63,7 +63,6 @@ Refer to [`notes.md`](/notes.md) to tune and enable KSM on CML. Do note it would
 │   └── 05_SR_TE_Policies
 ├── topology/                   # Network diagrams (.png, .drawio)
 ├── wireshark/                  # Wireshark packet capture
-├── IPv6_DualStack.md           # Optional IPv6 enhancement
 └── notes.md                    # Lab journal and troubleshooting    
 ```
 

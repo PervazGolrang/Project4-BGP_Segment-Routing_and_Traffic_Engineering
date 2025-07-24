@@ -1,264 +1,208 @@
 # Step 01 - IGP Underlay and BGP Overlay
 
-This step establishes the foundational control-plane infrastructure for the BGP Segment-Routing Traffic Engineering lab. All core network devices participate in a unified OSPFv3 domain to provide IP reachability, while iBGP overlay sessions are established through route reflectors to enable scalable BGP convergence without full-mesh complexity.
+This step establishes the foundational control-plane infrastructure for the BGP Segment-Routing Traffic Engineering lab using **IOS-XR**. All core network devices participate in a unified OSPFv3 domain to provide IP reachability, while iBGP overlay sessions are established through route reflectors to enable scalable BGP convergence without full-mesh complexity.
 
 ---
 
-## 1. Objective
+**Username is `cisco` and the password is `ciscocisco`.**
 
-This phase implements the baseline routing infrastructure required before enabling Segment-Routing capabilities:
-
-1. **IP Reachability**: Establish routed connectivity to all /32 loopback addresses across the core network
-2. **MPLS Foundation**: Enable MPLS forwarding on all transit interfaces to support future SR-MPLS operations  
-3. **iBGP Scalability**: Deploy route reflector hierarchy to avoid n(n-1)/2 iBGP session scaling issues
-4. **Label Distribution**: Populate MPLS forwarding tables with implicit-null and PHP behaviors
-
----
-
-## 2. Core Network Devices
+## 1. Core Network Devices
 
 The core network consists of six devices:
 
-| Device      | Role                | IPv4 Loopback | IPv6 Loopback      | Router-ID   | PID |
-|-------------|---------------------|---------------|--------------------|-------------|-----|
-| R1_OSLO     | Provider Edge       | 10.255.1.1    | 2001:db8:face::1   | 10.255.1.1  | 10  |
-| R2_BGO      | Provider Edge       | 10.255.1.2    | 2001:db8:face::2   | 10.255.1.2  | 10  |
-| RR1_OSLO    | Route Reflector     | 10.255.1.3    | 2001:db8:face::3   | 10.255.1.3  | 10  |
-| RR2_BGO     | Route Reflector     | 10.255.1.4    | 2001:db8:face::4   | 10.255.1.4  | 10  |
-| CORE1_OSLO  | Core Transit        | 10.255.1.5    | 2001:db8:face::5   | 10.255.1.5  | 10  |
-| CORE2_BGO   | Core Transit        | 10.255.1.6    | 2001:db8:face::6   | 10.255.1.6  | 10  |
+| Device      | Role                | IPv4 Loopback | PID |
+|-------------|---------------------|---------------|-----|
+| R1_OSLO     | Provider Edge       | 10.255.1.1/32 | 10  |
+| R2_BGO      | Provider Edge       | 10.255.1.2/32 | 10  |
+| RR1_OSLO    | Route Reflector     | 10.255.1.3/32 | 10  |
+| RR2_BGO     | Route Reflector     | 10.255.1.4/32 | 10  |
+| CORE1_OSLO  | Core Transit        | 10.255.1.5/32 | 10  |
+| CORE2_BGO   | Core Transit        | 10.255.1.6/32 | 10  |
 
 ---
 
-## 3. Implementation
+## 2. Implementation
 
-### 3.1 Base System Configuration
+### 2.1 Loopback Interface Configuration
 
 Configure to each core network device.
 
 ```bash
-hostname <DEVICE_NAME>
-!
 interface Loopback0
  description "Router-ID"
- ip address <LOOPBACK_IPv4> 255.255.255.255
+ ipv4 address <LOOPBACK_IPv4>/32
  ipv6 enable
- ospfv3 10 ipv4 area 0
-!
-mpls ip
-!
-ipv6 unicast-routing
-```
-
-### 3.2 Transit Interface Configuration
-
-Configure all point-to-point links between core devices. 
-The `point-to-point` network type prevents unnecessary DR/BDR elections on P2P links.
-
-
-```bash
-interface <INTERFACE_ID>
- description "To <Linked-Device>"
- ip address <IPv4_ADDRESS> 255.255.255.254
- ospfv3 10 ipv4 network point-to-point
- ipv6 enable
-!
- mpls ip
-!
- ospfv3 10 ipv4 area 0
-!
  no shutdown
 ```
 
-IPv6 configuration is in [`03_IPv6_DualStack.md`](/IPv6_DualStack.md).
+### 2.2 Point-to-Point Interface Configuration
 
-### 3.3 OSPFv3 Process Configuration
-
-Configure OSPFv3 with dual-stack capability for future IPv6 implementation:
+Configure all P2P interfaces with /31 subnets:
 
 ```bash
-router ospfv3 10
-!
- address-family ipv4 unicast
-  router-id <LOOPBACK_IPv4>
-  passive-interface default
-  no passive-interface <P2P interfaces>
+interface GigabitEthernet0/0/0/1
+ ipv4 address <P2P_IP>/31
+ ipv6 enable
+ no shutdown
 ```
 
-`Passive-interface default` is best practice.
+### 2.3 OSPF Configuration
 
-### 3.4 MPLS Label Distribution Protocol
-
-Enable LDP to distribute labels for IGP prefixes and enables PHP behavior. 
-
-**LDP-Enabled Interfaces per Device**
-
-| Device      | LDP-Enabled Interfaces                              |
-|-------------|-----------------------------------------------------|
-| R1_OSLO     | G4 (RR1), G5 (RR2)                                  |
-| R2_BGO      | G4 (RR2), G5 (RR1)                                  |
-| RR1_OSLO    | G1 (R1), G2 (CORE1), G3 (R2), G4 (CORE2), G5 (RR2)  |
-| RR2_BGO     | G1 (R2), G2 (CORE2), G3 (R1), G4 (CORE1), G5 (RR1)  |
-| CORE1_OSLO  | G1 (RR1), G2 (RR2), G4 (CORE2)                      |
-| CORE2_BGO   | G2 (RR1), G1 (RR2), G4 (CORE2)                      |
-
-### 3.5 Global LDP Configuration
+**Area 0 design** with all interfaces in backbone area:
 
 ```bash
-mpls ldp router-id Loopback0 force
-!
-mpls ldp advertise-labels
-mpls ldp explicit-null
-!
-interface <INTERFACE_ID>
- mpls ldp igp sync
- mpls ldp discovery transport-address <IPv4_LOOPBACK>
+router ospf 10
+ router-id <ROUTER_ID>
+ area 0
+  interface Loopback0
+   passive enable
+  !
+  interface <CORE_INTERFACES>
+    network point-to-point
 ```
 
-LDP is forced on Loopback0 to be used as the LDP identifier. Also, the transport address should match each device's loopback IP (e.g., 10.255.1.1 for R1_OSLO, 10.255.1.4 for RR2_BGO ...).
+### 2.4 MPLS Configuration
 
-### 3.6 BGP Route Reflector Hierarchy
+Enable MPLS on all core interfaces for future SR use:
 
-#### Route Reflector Configuration
+```bash
+mpls ldp
+ router-id <ROUTER_ID>
+ interface <CORE_INTERFACES>
+```
 
-**Route reflector configuration on RR1_OSLO and RR2_BGO:**
+### 2.5 BGP Route Reflector Configuration
+
+**Route reflector configuration (RR1_OSLO, RR2_BGO):**
 
 ```bash
 router bgp 65001
- bgp router-id <IPv4_RR_LOOPBACK>
- bgp log-neighbor-changes
- bgp cluster-id <IPv4_RR_LOOPBACK>
-!
-  neighbor 10.255.1.1 peer-group RR-CLIENTS             # R1_OSLO Loopback0
-  neighbor 10.255.1.2 peer-group RR-CLIENTS             # R2_BGO Loopback0
-  neighbor 10.255.1.5 peer-group RR-CLIENTS             # CORE1_OSLO Loopback0
-  neighbor 10.255.1.6 peer-group RR-CLIENTS             # CORE2_BGO Loopback0
-!
-  neighbor RR-CLIENTS send-community both
-  neighbor RR-CLIENTS update-source Loopback0
-  neighbor RR-CLIENTS peer-group
-  neighbor RR-CLIENTS remote-as 65001
-!
-  neighbor <OTHER_RR_LOOPBACK> remote-as 65001          # E.g. 10.255.1.4 (RR2 L0, if config of RR1)
-  neighbor <OTHER_RR_LOOPBACK> update-source Loopback0
-  neighbor <OTHER_RR_LOOPBACK> send-community both
-!
+ bgp router-id <RR_LOOPBACK_IP>
+ bgp log neighbor changes detail
  address-family ipv4 unicast
-  neighbor RR-CLIENTS route-reflector-client
-!
-  neighbor 10.255.1.1 activate                          # R1_OSLO Loopback0
-  neighbor 10.255.1.1 activate                          # R1_OSLO Loopback0
-  neighbor 10.255.1.X activate                          # RR1/RR2 Loopback0
-  neighbor 10.255.1.5 activate                          # CORE1_OSLO Loopback0
-  neighbor 10.255.1.6 activate                          # CORE2_BGO Loopback0
-!
-  neighbor <OTHER_RR_LOOPBACK> activate
-!
+  network <RR_LOOPBACK_IP>/32
+ !
+ neighbor-group RR-CLIENTS
+  remote-as 65001
+  update-source Loopback0
+  address-family ipv4 unicast
+   route-reflector-client
+ !
+ neighbor 10.255.1.1
+  use neighbor-group RR-CLIENTS
+ neighbor 10.255.1.2
+  use neighbor-group RR-CLIENTS
+ neighbor 10.255.1.5
+  use neighbor-group RR-CLIENTS
+ neighbor 10.255.1.6
+  use neighbor-group RR-CLIENTS
+ !
+ neighbor <OTHER_RR_IP>
+  remote-as 65001
+  update-source Loopback0
 ```
 
-Change `X` with the RR1/RR2 Loopback.
+### 2.6 BGP Client Configuration
 
-**RR Client Assignments:** Both RR1_OSLO (10.255.1.3) and RR2_BGO (10.255.1.4) serve all four clients: R1_OSLO, R2_BGO, CORE1_OSLO, and CORE2_BGO. This provides full redundancy since all clients connect to both route reflectors.
-
-**Route reflector client configuration (applied to R1_OSLO, R2_BGO, CORE1_OSLO, CORE2_BGO):**
+**Route reflector client configuration (R1_OSLO, R2_BGO, CORE1_OSLO, CORE2_BGO):**
 
 ```bash
 router bgp 65001
- bgp router-id <CLIENT_LOOPBACK_IPv4>
- bgp log-neighbor-changes
-!
-  neighbor 10.255.1.3 remote-as 65001               # Peer with RR1
-  neighbor 10.255.1.3 update-source Loopback0
-!
-  neighbor 10.255.1.4 remote-as 65001               # Peer with RR2
-  neighbor 10.255.1.4 update-source Loopback0
-!
+ bgp router-id <CLIENT_LOOPBACK_IP>
+ bgp log neighbor changes detail
  address-family ipv4 unicast
-  neighbor 10.255.1.3 activate   
-  neighbor 10.255.1.3 send-community both
-!
-  neighbor 10.255.1.4 activate 
-  neighbor 10.255.1.4 send-community both
+  network <CLIENT_LOOPBACK_IP>/32
+ !
+ neighbor 10.255.1.3
+  remote-as 65001
+  update-source Loopback0
+  address-family ipv4 unicast
+  !
+ neighbor 10.255.1.4
+  remote-as 65001
+  update-source Loopback0
+  address-family ipv4 unicast
 ```
+
+On IOS XR the `neighbor x.x.x.x activate` is not needed, as it automatically activates once the `address-family ipv4 unicast` and `neighbor` submods are configured.
 
 ---
 
-## 4. Verification and Validation
+## 3. Verification
 
-### 4.1 OSPFv3 Adjacency Verification
+### 3.1 OSPF Verification
 
-Verify that MPLS forwarding entries exist for all loopback prefixes:
-
-```bash
-show ospfv3 neighbor
-show ospfv3 database
-show ospfv3 10 ipv4 database
-```
-
-All neighbor states should show `FULL`. The OSPF database should contain LSAs from all 6 core devices with /32 routes for all loopbacks.
-
-### 4.2 MPLS LDP Validation
+Verify OSPF adjacencies and database:
 
 ```bash
-show mpls ldp neighbor
-show mpls ldp bindings
-show mpls forwarding-table
+show ospf neighbor
+show ospf database
+show route ipv4 ospf
 ```
-LDP neighbors should show `Oper` state. Label bindings should exist for all /32 loopback prefixes (10.255.1.1-10.255.1.6) with implicit-null for directly connected destinations.
 
-### 4.3 iBGP Session State Verification
+All neighbor states should show `FULL`. The OSPF database should contain LSAs from all 6 core devices with /32 routes for all loopbacks. All core device loopbacks should be reachable via OSPF.
 
-Validate BGP session establishment and route reflector functionality:
+### 3.2 BGP Verification
+
+Verify iBGP sessions and route reflection:
 
 ```bash
-show bgp ipv4 unicast summary
+show bgp summary
+show bgp ipv4 unicast
+show bgp neighbour summary
 ```
 
-Should show valid BGP state with Up/Down.
+Both Route Reflectors should show **4 clients each**, and clients learn routes from **both route reflectors**, as well as the BGP unicast neighbor, which is the redundant Route Reflector.
 
-### 4.4 End-to-End Reachability Testing
+### 3.3 Connectivity Testing
 
-Test IP connectivity between all core device loopbacks:
+Test end-to-end reachability:
 
 ```bash
 ping 10.255.1.1 source 10.255.1.6             #Pinging R1_OSLO from CORE2_BGO Lo0
 ping 10.255.1.2 source 10.255.1.5             #Pinging R2_BGO from CORE1_OSLO Lo0
-traceroute 10.255.1.1 source 10.255.1.6
+traceroute 10.255.1.3 source 10.255.1.6       #Traceroute RR1_OSLO from CORE2_BGO
 ```
 
-Expect a +80% success rate (due to ARP), with a sub-10ms response time in the lab environment. Pinging [`R1_OSLO from CORE2_BGO's Loopback0`](/wireshark/CORE2_BGO-to-R1_OSLO-Step01.pcap) shows an average ~2ms latency between packets. Traceroute paths should follow optimal OSPF cost calculations.
+Expect a +100% success rate (after ARP), with a sub-10ms ICMP response time, and sub-20 traceroute response time in the lab environment. Ping will be lower due to routing and ARP, which is cached. While traceroute will send a new packate, through a new process in the control plane.
+
+Expect a +100% success rate (after ARP), with a sub-10ms ICMP response time, and a completed sub-50ms traceroute hop responses in the lab environment. Ping will be faster because it uses cached routing and ARP entries. Traceroute will be slower even if `minttl 1 maxttl 1` was used, because the routes generate ICMP Time Exceeded messages in the control plane, wihch causes significant delta delays, even if it is one hop away.
+
+- Pinging [`R1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-CORE2_BGO-to-R1_OSLO-ICMP.pcap) shows an average ~2ms latency between packets. Traceroute paths should follow optimal OSPF cost calculations.
+
+- Traceroute [``RR1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-RR1_OSLO-to-CORE2_BGO-TRACEROUTE.pcap) shows an average ~14ms latency between packets. Traceroute followed the optimal OSPF path through cost calculations. 
+
+### 3.4 Route Reflection Verification
+
+Verify route reflector operation:
+
+```bash
+show bgp ipv4 unicast neighbors <client-ip> advertised-routes
+show bgp ipv4 unicast neighbors <client-ip> routes
+```
+
+Clients should receive reflected routes from other clients.
 
 ---
 
-## 5. Troubleshooting Common Issues
+## 4. Troubleshooting
 
-**BGP Session Failures:** BGP neighbors stuck in Active or Connect state would result to IP reachability issues. Verify `update-source Loopback0` configuration.
+**OSPF adjacency issues:** Check interface IP addressing and area configuration. IOS-XR requires explicit interface-to-area assignment.
 
-**OSPF Adjacency Issues:** Neighbor states showing `INIT` or `2WAY` are due to missing ospf network point-to-point configuration on P2P interfaces.
+**BGP session failures:** Verify loopback reachability via OSPF. Check `update-source Loopback0` configuration.
 
-**MPLS Forwarding Gaps:** Missing LFIB entries mean that the `mpls ip` is not configured on transit interfaces, or OSPF is not advertising loopbacks properly.
+**Route reflection problems:** Confirm route-reflector-client configuration on RRs and proper neighbor-group usage.
 
-**Route Reflector Problems:** RR clients not receiving reflected routes mean there's a missing route-reflector-client configuration or incorrect cluster-id configuration.
+**MPLS issues:** Verify LDP is enabled on all core interfaces and router-id is configured.
 
 ---
 
-## 6. Rollback Procedure
+## 5. Rollback
 
 To return the network to pre-BGP, pre-MPLS baseline configuration:
 
 ```bash
 no router bgp 65001
-no mpls ldp router-id
-no mpls ldp advertise-labels  
-no mpls ldp explicit-null
-no router ospfv3 10
-!
-interface <interface-id>
- no mpls ip
- no mpls ldp igp sync
- no mpls ldp discovery transport-address
- no ospfv3 10 ipv4 area 0
- no ospfv3 10 ipv6 area 0
-!
-no mpls ip
+no mpls ldp
+no router ospf 10
 ```

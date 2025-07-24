@@ -57,7 +57,7 @@ The lab is split into two primary PoPs:
 
 ## Segment Routing (SR-MPLS)
 
-* **Global SRGB**: 16000–23999
+* **Global SRGB**: 15000–15999
 * **Prefix SIDs**: Assigned to loopbacks of all ISP devices
 * **Adjacency SIDs**: Used for fast reroute and path pinning
 * **Peer SIDs**: For egress SR policy-based steering
@@ -82,7 +82,6 @@ The lab is split into two primary PoPs:
   * Local Preference (inbound priority)
   * MED (outbound traffic hint)
   * AS Path Prepending (influence peer path selection)
-  * Communities for blackholing (e.g. 65001:666)
 
 * **Failover**:
 
@@ -98,10 +97,3 @@ The lab is split into two primary PoPs:
 * Customers are single-homed, no redundancy is modeled
 * Delay and jitter models are not used, as CML lab is idealized
 * Full-mesh peering between edge, core, and RRs is reflected through BGP RR hierarchy
-
----
-
-## Why Cat8000v Only?
-
-* Cat8000v supports modern SR features (SR-MPLS, SR-TE, BFD) compared to CSR1000v
-* Uniformity across devices avoids feature mismatch and simplifies validation

@@ -1,22 +1,10 @@
 # Step 04 - BGP Policies and Route Control
 
-This step implements comprehensive BGP route policies to enforce business relationships, optimize traffic engineering, and provide granular control over route advertisement and selection. The policies establish proper filtering, community-based route marking, and local-preference manipulation to ensure predictable routing behavior across all peering relationships.
+This step implements comprehensive BGP route policies using **IOS-XR** to enforce business relationships, optimize traffic engineering, and provide granular control over route advertisement and selection. The policies establish proper filtering, community-based route marking, and local-preference manipulation to ensure predictable routing behavior across all peering relationships.
 
 ---
 
-## 1. Objective
-
-This phase implements advanced BGP policy controls on the eBGP sessions:
-
-1. **Business Relationship Enforcement:** Implement proper route filtering based on customer-provider and peer-peer relationships
-2. **Community-Based Route Control:** Deploy BGP communities for route marking and policy application
-3. **Traffic Engineering:** Configure local-preference and MED manipulation for optimal path selection
-4. **Security Hardening:** Implement comprehensive prefix filtering and route validation
-5. **Operational Flexibility:** Enable granular route control for traffic engineering and troubleshooting
-
----
-
-## 2. Network policy matrix
+## 1. Network policy matrix
 
 | Device        | Neighbor Type | Policy Focus                     | Communities Used    | Local-Pref Range |
 |---------------|---------------|----------------------------------|---------------------|------------------|
@@ -36,355 +24,489 @@ BGO (Bergen) is used as the primary path due to it is closer to my home city, St
 | 65001:100    | Customer routes            | Customer-originated     | Advertise to all neighbors  |
 | 65001:200    | Peer routes                | Peer-learned routes     | Advertise to only customers |
 | 65001:300    | Upstream routes            | Transit-learned routes  | Advertise to only customers |
-| 65001:666    | Blackhole/discard          | Blackholed prefixes     | Trigger blackhole routing   |
 | 65001:90     | Backup path                | Secondary transit       | Lower local-preference      |
 | 65001:110    | Primary path               | Primary transit         | Higher local-preference     |
 
 ---
 
-## 3. Implementation
+## 2. Implementation
 
-### 3.1 Global Community Lists and Route-Maps
+### 2.1 R1_OSLO Configuration (Upstream + Customer)
 
-Configure standard community lists for policy matching:
+**Configuring the prefix- and community sets:**
 
 ```bash
-ip community-list standard CUSTOMER_ROUTES permit 65001:100
-ip community-list standard PEER_ROUTES permit 65001:200
-ip community-list standard UPSTREAM_ROUTES permit 65001:300
-ip community-list standard BLACKHOLE_ROUTES permit 65001:666
-ip community-list standard PRIMARY_PATH permit 65001:110
-ip community-list standard BACKUP_PATH permit 65001:90
+prefix-set OWN_PREFIXES
+  192.0.2.0/24 le 30,
+  10.255.1.0/24 le 32
+end-set
 !
-ip community-list expanded NO_EXPORT_TO_PEERS permit _65001:200_
-ip community-list expanded CUSTOMER_ONLY permit _65001:[13]00_        #100 and 300
+prefix-set CUST1_PREFIXES
+  198.51.100.0/25 le 28
+end-set
+!
+community-set CUSTOMER_ROUTES
+  65001:100
+end-set
+!
+community-set UPSTREAM_ROUTES
+  65001:300
+end-set
 ```
 
-### 3.2 Upstream Provider Policies
-
-**R1_OSLO upstream policy configuration:**
+**Configuring route policies:**
 
 ```bash
-route-map TO_UPSTREAM_OUT permit 10
- description "Allow customer routes to upstream"
- match community CUSTOMER_ROUTES
- set community 65001:100 additive
+route-policy TO_UPSTREAM_OUT
+  if community matches-any CUSTOMER_ROUTES then
+    set community (65001:100) additive
+    pass
+  elseif destination in OWN_PREFIXES then
+    set community (65001:100) additive
+    pass
+  else
+    drop
+  endif
+end-policy
 !
-route-map TO_UPSTREAM_OUT permit 20
- description "Allow own infrastructure routes"
- match ip address prefix-list OWN_PREFIXES
- set community 65001:100 additive
+route-policy FROM_ISP1_IN
+  set community (65001:300) additive
+  set local-preference 120
+  pass
+end-policy
 !
-route-map TO_UPSTREAM_OUT deny 30
- description "Deny all other routes (no transit)"
+route-policy FROM_ISP2_IN
+  set community (65001:300, 65001:90) additive
+  set local-preference 110
+  pass
+end-policy
 !
-route-map FROM_ISP1_IN permit 10
- description "Primary upstream path via ISP1"
- set community 65001:300 additive
- set local-preference 120
+route-policy FROM_CUST1_IN
+  if destination in CUST1_PREFIXES then
+    set community (65001:100) additive
+    set local-preference 300
+    set origin igp
+    pass
+  else
+    drop
+  endif
+end-policy
 !
-route-map FROM_ISP2_IN permit 10
- description "Backup upstream path via ISP2"
- set community 65001:300 65001:90 additive
- set local-preference 110
-!
+route-policy TO_CUSTOMER_OUT
+  set community (65001:300) additive
+  pass
+end-policy
+```
+
+**Apply policies to BGP neighbors:**
+
+```bash
 router bgp 65001
- address-family ipv4 unicast
-  neighbor 192.0.2.1 route-map FROM_ISP1_IN in
-  neighbor 192.0.2.1 route-map TO_UPSTREAM_OUT out
-  neighbor 192.0.2.3 route-map FROM_ISP2_IN in
-  neighbor 192.0.2.3 route-map TO_UPSTREAM_OUT out
+ neighbor 192.0.2.1
+  address-family ipv4 unicast
+   route-policy FROM_ISP1_IN in
+   route-policy TO_UPSTREAM_OUT out
+  !
+ !
+ neighbor 192.0.2.3
+  address-family ipv4 unicast
+   route-policy FROM_ISP2_IN in
+   route-policy TO_UPSTREAM_OUT out
+  !
+ !
+ neighbor 198.51.100.0
+  address-family ipv4 unicast
+   route-policy FROM_CUST1_IN in
+   route-policy TO_CUSTOMER_OUT out
+   maximum-prefix 50 75 restart 5
 ```
 
-**R2_BGO upstream policy configuration:** 
+### 2.2 R2_BGO Configuration (Upstream + Customer)
+
+**Configure prefix sets and community sets:**
 
 ```bash
-route-map FROM_ISP1_IN permit 10
- description "Backup upstream path via ISP1"
- set community 65001:300 65001:90 additive
- set local-preference 110
+prefix-set OWN_PREFIXES
+  192.0.2.0/24 le 30,
+  10.255.1.0/24 le 32
+end-set
 !
-route-map FROM_ISP2_IN permit 10
- description "Primary upstream path via ISP2"
- set community 65001:300 additive  
- set local-preference 120
+prefix-set CUST2_PREFIXES
+  198.51.100.128/25 le 28
+end-set
 !
+community-set CUSTOMER_ROUTES
+  65001:100
+end-set
+!
+community-set UPSTREAM_ROUTES
+  65001:300
+end-set
+```
+
+**Configure route policies:**
+
+```bash
+route-policy TO_UPSTREAM_OUT
+  if community matches-any CUSTOMER_ROUTES then
+    set community (65001:100) additive
+    pass
+  elseif destination in OWN_PREFIXES then
+    set community (65001:100) additive
+    pass
+  else
+    drop
+  endif
+end-policy
+!
+route-policy FROM_ISP1_IN
+  set community (65001:300, 65001:90) additive
+  set local-preference 110
+  pass
+end-policy
+!
+route-policy FROM_ISP2_IN
+  set community (65001:300) additive
+  set local-preference 120
+  pass
+end-policy
+!
+route-policy FROM_CUST2_IN
+  if destination in CUST2_PREFIXES then
+    set community (65001:100) additive
+    set local-preference 300
+    set origin igp
+    pass
+  else
+    drop
+  endif
+end-policy
+!
+route-policy TO_CUSTOMER_OUT
+  set community (65001:300) additive
+  pass
+end-policy
+```
+
+**Apply policies to BGP neighbors:**
+
+```bash
 router bgp 65001
- address-family ipv4 unicast
-  neighbor 192.0.2.5 route-map FROM_ISP1_IN in
-  neighbor 192.0.2.5 route-map TO_UPSTREAM_OUT out
-  neighbor 192.0.2.7 route-map FROM_ISP2_IN in
-  neighbor 192.0.2.7 route-map TO_UPSTREAM_OUT out
+ neighbor 192.0.2.5
+  address-family ipv4 unicast
+   route-policy FROM_ISP1_IN_R2 in
+   route-policy TO_UPSTREAM_OUT out
+  !
+ !
+ neighbor 192.0.2.7
+  address-family ipv4 unicast
+   route-policy FROM_ISP2_IN_R2 in
+   route-policy TO_UPSTREAM_OUT out
+  !
+ !
+ neighbor 198.51.100.4
+  address-family ipv4 unicast
+   route-policy FROM_CUST2_IN in
+   route-policy TO_CUSTOMER_OUT out
+   maximum-prefix 50 75 restart 5
 ```
 
-### 3.3 Public Peering Policies
+### 2.3 CORE1_OSLO Configuration (Peering Only)
 
-**CORE1_OSLO peering policy configuration:**
-
-Do note these are strict outbound peering policies to peers, no transit routes.
+**Configure prefix sets and community sets:**
 
 ```bash
-route-map TO_PEER_OUT permit 10
- description "Allow customer routes to peers"
- match community CUSTOMER_ROUTES
- set community 65001:200 additive
+prefix-set OWN_PREFIXES
+  192.0.2.0/24 le 30,
+  10.255.1.0/24 le 32
+end-set
 !
-route-map TO_PEER_OUT permit 20
- description "Allow own routes to peers"
- match ip address prefix-list OWN_PREFIXES
- set community 65001:200 additive
+prefix-set PEER_PREFIXES
+  203.0.113.0/24 le 30,
+  198.51.100.0/24 le 30
+end-set
 !
-route-map TO_PEER_OUT deny 30
- description "Deny upstream and peer routes"
+prefix-set BOGON_PREFIXES
+  0.0.0.0/8 le 32,
+  10.0.0.0/8 le 32,
+  127.0.0.0/8 le 32,
+  169.254.0.0/16 le 32,
+  172.16.0.0/12 le 32,
+  192.168.0.0/16 le 32,
+  224.0.0.0/4 le 32,
+  240.0.0.0/4 le 32
+end-set
 !
-route-map FROM_PEER_IN permit 10
- description "Accept peer routes with validation"
- match ip address prefix-list PEER_PREFIXES
- set community 65001:200 additive
- set local-preference 200
+community-set CUSTOMER_ROUTES
+  65001:100
+end-set
 !
-route-map FROM_PEER_IN deny 20
- description "Deny invalid prefixes from peers"
+community-set PEER_ROUTES
+  65001:200
+end-set
+```
+
+**Configure strict peering policies:**
+
+```bash
+route-policy TO_PEER_OUT
+  if community matches-any CUSTOMER_ROUTES then
+    set community (65001:200) additive
+    pass
+  elseif destination in OWN_PREFIXES then
+    set community (65001:200) additive
+    pass
+  else
+    drop
+  endif
+end-policy
 !
+route-policy FROM_PEER_IN
+  if destination in PEER_PREFIXES and not destination in BOGON_PREFIXES then
+    set community (65001:200) additive
+    set local-preference 200
+    pass
+  else
+    drop
+  endif
+end-policy
+```
+
+**Apply policies to peering neighbor:**
+
+```bash
 router bgp 65001
- address-family ipv4 unicast
-  neighbor 192.0.2.27 route-map FROM_PEER_IN in
-  neighbor 192.0.2.27 route-map TO_PEER_OUT out
-  neighbor 192.0.2.27 maximum-prefix 1000 restart 5
+ neighbor 192.0.2.27
+  address-family ipv4 unicast
+   route-policy FROM_PEER_IN in
+   route-policy TO_PEER_OUT out
+   maximum-prefix 1000 75 restart 5
 ```
 
-**CORE2_BGO peering policy configuration:**
+### 2.4 CORE2_BGO Configuration (Peering Only)
+
+**Configure prefix sets and community sets (same as CORE1_OSLO):**
 
 ```bash
+prefix-set OWN_PREFIXES
+  192.0.2.0/24 le 30,
+  10.255.1.0/24 le 32
+end-set
 !
-route-map TO_PEER_OUT permit 10
- description "Allow customer routes to peers"
- match community CUSTOMER_ROUTES
- set community 65001:200 additive
+prefix-set PEER_PREFIXES
+  203.0.113.0/24 le 30,
+  198.51.100.0/24 le 30
+end-set
 !
-route-map TO_PEER_OUT permit 20
- description "Allow own routes to peers"
- match ip address prefix-list OWN_PREFIXES
- set community 65001:200 additive
+prefix-set BOGON_PREFIXES
+  0.0.0.0/8 le 32,
+  10.0.0.0/8 le 32,
+  127.0.0.0/8 le 32,
+  169.254.0.0/16 le 32,
+  172.16.0.0/12 le 32,
+  192.168.0.0/16 le 32,
+  224.0.0.0/4 le 32,
+  240.0.0.0/4 le 32
+end-set
 !
-route-map TO_PEER_OUT deny 30
- description "Deny upstream and peer routes"
+community-set CUSTOMER_ROUTES
+  65001:100
+end-set
 !
-route-map FROM_PEER_IN permit 10
- description "Accept peer routes with validation"
- match ip address prefix-list PEER_PREFIXES
- set community 65001:200 additive
- set local-preference 200
+community-set PEER_ROUTES
+  65001:200
+end-set
+```
+
+**Configure and apply same peering policies:**
+
+```bash
+route-policy TO_PEER_OUT
+  if community matches-any CUSTOMER_ROUTES then
+    set community (65001:200) additive
+    pass
+  elseif destination in OWN_PREFIXES then
+    set community (65001:200) additive
+    pass
+  else
+    drop
+  endif
+end-policy
 !
-route-map FROM_PEER_IN deny 20
- description "Deny invalid prefixes from peers"
-!
+route-policy FROM_PEER_IN
+  if destination in PEER_PREFIXES and not destination in BOGON_PREFIXES then
+    set community (65001:200) additive
+    set local-preference 200
+    pass
+  else
+    drop
+  endif
+end-policy
+```
+
+**Apply policies to peering neighbor:**
+
+```bash
 router bgp 65001
- address-family ipv4 unicast
-  neighbor 192.0.2.29 route-map FROM_PEER_IN in
-  neighbor 192.0.2.29 route-map TO_PEER_OUT out  
-  neighbor 192.0.2.29 maximum-prefix 1000 restart 5
-```
-
-Maximum-prefix is set to 1000 to protect memory overload and CPU-usage, with an automatic session retry every 5 minutes.
-
-### 3.4 Customer Policies
-
-**R1_OSLO customer policy configuration:**
-
-```bash
-route-map TO_CUSTOMER_OUT permit 10
- description "Provide all routes to customer with community tagging"
- set community 65001:300 additive
-!
-route-map FROM_CUST1_IN permit 10
- description "Accept only customer-owned prefixes"
- match ip address prefix-list CUST1_PREFIXES
- set community 65001:100 additive
- set local-preference 300
- set origin igp
-!
-route-map FROM_CUST1_IN deny 20
- description "Deny all other prefixes from customer"
-!
-ip prefix-list CUST1_PREFIXES seq 5 permit 198.51.100.128/25 le 28
-ip prefix-list CUST1_PREFIXES seq 10 deny 0.0.0.0/0 le 32
-!
-router bgp 65001
- address-family ipv4 unicast
-  neighbor 198.51.100.0 route-map FROM_CUST1_IN in
-  neighbor 198.51.100.0 route-map TO_CUSTOMER_OUT out
-  neighbor 198.51.100.0 maximum-prefix 50 restart 5
-```
-
-**R2_BGO customer policy configuration:**
-
-```bash
-route-map TO_CUSTOMER_OUT permit 10
- description "Provide all routes to customer with community tagging"
- set community 65001:300 additive
-!
-route-map FROM_CUST2_IN permit 10
- description "Accept only customer-owned prefixes"
- match ip address prefix-list CUST2_PREFIXES
- set community 65001:100 additive
- set local-preference 300
- set origin igp
-!
-route-map FROM_CUST2_IN deny 20
- description "Deny all other prefixes from customer"
-!
-ip prefix-list CUST2_PREFIXES seq 5 permit 198.51.100.128/25 le 28
-ip prefix-list CUST2_PREFIXES seq 10 deny 0.0.0.0/0 le 32
-!
-router bgp 65001
- address-family ipv4 unicast
-  neighbor 198.51.100.4 route-map FROM_CUST2_IN in
-  neighbor 198.51.100.4 route-map TO_CUSTOMER_OUT out
-  neighbor 198.51.100.4 maximum-prefix 50 restart 5
-```
-
-### 3.5 Infrastructure and Security Policies
-
-Defining prefixes and bogon filtering:
-
-```bash
-ip prefix-list OWN_PREFIXES seq 5 permit 192.0.2.0/24 le 30
-ip prefix-list OWN_PREFIXES seq 10 permit 10.255.1.0/24 le 32
-!
-ip prefix-list PEER_PREFIXES seq 5 permit 203.0.113.0/24 le 30
-ip prefix-list PEER_PREFIXES seq 10 permit 198.51.100.0/24 le 30
-ip prefix-list PEER_PREFIXES seq 100 deny 0.0.0.0/0 le 32
-!
-ip prefix-list BOGON_PREFIXES seq 5 deny 0.0.0.0/8 le 32
-ip prefix-list BOGON_PREFIXES seq 10 deny 10.0.0.0/8 le 32
-ip prefix-list BOGON_PREFIXES seq 15 deny 127.0.0.0/8 le 32
-ip prefix-list BOGON_PREFIXES seq 20 deny 169.254.0.0/16 le 32
-ip prefix-list BOGON_PREFIXES seq 25 deny 172.16.0.0/12 le 32
-ip prefix-list BOGON_PREFIXES seq 30 deny 192.0.2.0/24 le 32
-ip prefix-list BOGON_PREFIXES seq 35 deny 192.168.0.0/16 le 32
-ip prefix-list BOGON_PREFIXES seq 40 deny 224.0.0.0/4 le 32
-ip prefix-list BOGON_PREFIXES seq 45 deny 240.0.0.0/4 le 32
-ip prefix-list BOGON_PREFIXES seq 100 permit 0.0.0.0/0 le 32
-```
-
-Blackhole route handling for security incidents:
-
-```bash
-route-map BLACKHOLE_TRIGGER permit 10
- description "Trigger blackhole routing for security"
- match community BLACKHOLE_ROUTES
- set community no-export additive
- set local-preference 50
- set ip next-hop discard
-!
-router bgp 65001
- address-family ipv4 unicast
-  table-map BLACKHOLE_TRIGGER
+ neighbor 192.0.2.29
+  address-family ipv4 unicast
+   route-policy FROM_PEER_IN in
+   route-policy TO_PEER_OUT out
+   maximum-prefix 1000 75 restart 5
 ```
 
 ---
 
-## 4. Verification
+## 3. Verification
 
-### 4.1 Policy Application
+### 3.1 Policy Application Status
 
-Verify that the route-maps are correctly applied:
+Verify route policies are correctly applied:
 
 ```bash
-show route-map
-show route-map TO_UPSTREAM_OUT
-show route-map FROM_ISP1_IN detail
-show bgp ipv4 unicast neighbors <neighbor-ip> policy
+show rpl
+show rpl route-policy TO_UPSTREAM_OUT
+show bgp neighbors 192.0.2.1 policy
+show bgp policy route-policy TO_UPSTREAM_OUT
 ```
 
-Route-maps should be active on all configured neighbors with match/set statistics incrementing for active policies. Policy configuration should match the intended business relationships.
+### 3.2 Community Assignment Verification
 
-### 4.2 Community Assignment
-
-Confirm the proper community tagging on routes:
+Confirm proper community tagging:
 
 ```bash
-show bgp ipv4 unicast community 65001:100
-show bgp ipv4 unicast community 65001:200
-show bgp ipv4 unicast community 65001:300
-show bgp ipv4 unicast regexp _65001:
+show bgp community 65001:100
+show bgp community 65001:200
+show bgp community 65001:300
+show bgp regexp _65001:
 ```
 
-Customer routes should be tagged with 65001:100, peer routes with 65001:200, upstream routes with 65001:300. Community propagation through iBGP should be maintained.
+Customer routes should be tagged with 65001:100, peer routes with 65001:200, upstream routes with 65001:300.
 
-### 4.3 Local-Preference and Path Selection
+### 3.3 Route Advertisement Filtering
 
-Verify the traffic engineering through local-preference manipulation:
-
-```bash
-show bgp ipv4 unicast <prefix> bestpath
-show bgp ipv4 unicast <prefix>
-show bgp ipv4 unicast rib-failure
-```
-
-Primary paths (local-pref 120) should be preferred over backup paths (local-pref 110). Customer routes (local-pref 300) should be preferred over peer/upstream routes. Path diversity should be maintained for redundancy.
-
-### 4.4 Route Advertisement Filtering
-
-Confirm the proper outbound filtering to each neighbor type:
+Confirm outbound filtering per neighbor type:
 
 ```bash
-show bgp ipv4 unicast neighbors <upstream-ip> advertised-routes
-show bgp ipv4 unicast neighbors <peer-ip> advertised-routes
-show bgp ipv4 unicast neighbors <customer-ip> advertised-routes
-```
-
-Upstream neighbors should receive customer + own prefixes only. Peer neighbors should receive customer + own prefixes only (no transit). Customer neighbors should receive full table or default route.
-
-### 4.5 Security and Validation Testing
-
-Test prefix filtering and bogon protection:
-
-```bash
-show bgp ipv4 unicast regexp _10_
-show bgp ipv4 unicast regexp _127_
+show bgp neighbors <upstream-ip> advertised-routes
+show bgp neighbors <peer-ip> advertised-routes
+show bgp neighbors <customer-ip> advertised-routes
 ```
 
 ---
 
-## 5. Troubleshooting
+## 4. Troubleshooting
 
-**Route-Map Not Applied:** If a policy is not taking effect on routes it would mean that there's a route-map syntax error, missing neighbor activation, or it needs a BGP soft-reset.
+**Policy Not Applied**: Check route-policy syntax, BGP neighbor configuration, and soft-reset requirements.
 
-**Community Assignment Failures:** Routes that are missing expected communities would result from incorrect route-map permit/deny logic, or an incorrect community-list definition.
+**Community Assignment Issues**: Verify community-set definitions and route-policy logic with `show bgp policy statistics`.
 
-**Local-Preference Not Working:** Suboptimal path selection despite local-preference settings would result to iBGP propagation issues or higher-priority BGP attributes overriding.
+**Local-Preference Problems**: Check iBGP propagation and higher-priority BGP attributes.
 
-**Prefix Filtering Issues:** Unexpected routes accepted or denied result from incorrect prefix-list definitions or route-map sequence numbers.
+**Prefix Filtering Failures**: Validate prefix-set definitions and route-policy conditional logic.
 
 ---
 
-## 6. Rollback
+## 5. Rollback
 
-To remove all BGP policies and revert to basic session configuration:
+To remove all BGP policies per device:
 
+### 5.1 R1_OSLO:
 ```bash
+no prefix-set OWN_PREFIXES
+no prefix-set CUST1_PREFIXES
+no community-set CUSTOMER_ROUTES
+no community-set UPSTREAM_ROUTES
+!
+no route-policy TO_UPSTREAM_OUT
+no route-policy FROM_ISP1_IN
+no route-policy FROM_ISP2_IN
+no route-policy FROM_CUST1_IN
+no route-policy TO_CUSTOMER_OUT
+!
 router bgp 65001
- address-family ipv4 unicast
-  no neighbor <neighbor-ip> route-map <route-map-name> in
-  no neighbor <neighbor-ip> route-map <route-map-name> out
-  no neighbor <neighbor-ip> maximum-prefix
+ neighbor 192.0.2.1
+  address-family ipv4 unicast
+   no route-policy FROM_ISP1_IN in
+   no route-policy TO_UPSTREAM_OUT out
+ !
+ neighbor 192.0.2.3
+  address-family ipv4 unicast
+   no route-policy FROM_ISP2_IN in
+   no route-policy TO_UPSTREAM_OUT out
+ !
+ neighbor 198.51.100.0
+  address-family ipv4 unicast
+   no route-policy FROM_CUST1_IN in
+   no route-policy TO_CUSTOMER_OUT out
+   no maximum-prefix 50 75 restart 5
+```
+
+### 5.2 R2_BGO:
+```bash
+no prefix-set OWN_PREFIXES
+no prefix-set CUST2_PREFIXES
+no community-set CUSTOMER_ROUTES
+no community-set UPSTREAM_ROUTES
 !
-no route-map TO_UPSTREAM_OUT
-no route-map FROM_ISP1_IN
-no route-map FROM_ISP2_IN
-no route-map TO_PEER_OUT
-no route-map FROM_PEER_IN
-no route-map TO_CUSTOMER_OUT
-no route-map FROM_CUST1_IN
-no route-map FROM_CUST2_IN
+no route-policy TO_UPSTREAM_OUT
+no route-policy FROM_ISP1_IN
+no route-policy FROM_ISP2_IN
+no route-policy FROM_CUST1_IN
+no route-policy TO_CUSTOMER_OUT
 !
-no ip community-list standard CUSTOMER_ROUTES
-no ip community-list standard PEER_ROUTES
-no ip community-list standard UPSTREAM_ROUTES
-no ip prefix-list OWN_PREFIXES
-no ip prefix-list BOGON_PREFIXES
-no ip prefix-list CUST1_PREFIXES
-no ip prefix-list CUST2_PREFIXES
+router bgp 65001
+ neighbor 192.0.2.5
+  address-family ipv4 unicast
+   route-policy FROM_ISP1_IN in
+   route-policy TO_UPSTREAM_OUT out
+ !
+ neighbor 192.0.2.7
+  address-family ipv4 unicast
+   route-policy FROM_ISP2_IN in
+   route-policy TO_UPSTREAM_OUT out
+ !
+ neighbor 198.51.100.4
+  address-family ipv4 unicast
+   route-policy FROM_CUST2_IN in
+   route-policy TO_CUSTOMER_OUT out
+   maximum-prefix 50 75 restart 5
+```
+
+### 5.3 CORE1_OSLO:
+```bash
+no prefix-set OWN_PREFIXES
+no prefix-set PEER_PREFIXES
+no prefix-set BOGON_PREFIXES
+no community-set CUSTOMER_ROUTES
+no community-set UPSTREAM_ROUTES
+!
+no route-policy TO_PEER_OUT
+no route-policy FROM_PEER_IN
+!
+router bgp 65001
+ neighbor 192.0.2.27
+  address-family ipv4 unicast
+   route-policy FROM_PEER_IN in
+   route-policy TO_PEER_OUT out
+   maximum-prefix 1000 75 restart 5
+```
+
+### 5.4 CORE2_BGO:
+```bash
+no prefix-set OWN_PREFIXES
+no prefix-set PEER_PREFIXES
+no prefix-set BOGON_PREFIXES
+no community-set CUSTOMER_ROUTES
+no community-set UPSTREAM_ROUTES
+!
+no route-policy TO_PEER_OUT
+no route-policy FROM_PEER_IN
+!
+router bgp 65001
+ neighbor 192.0.2.29
+  address-family ipv4 unicast
+   route-policy FROM_PEER_IN in
+   route-policy TO_PEER_OUT out
+   maximum-prefix 1000 75 restart 5
 ```
