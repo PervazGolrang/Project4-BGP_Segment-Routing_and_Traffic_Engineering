@@ -1,6 +1,6 @@
 # Step 05 - SR-TE Policies and Traffic Engineering
 
-This step deploys Segment Routing Traffic Engineering (SR-TE) policies using **IOS-XR** to provide explicit path control, service differentiation, and advanced traffic steering capabilities. The implementation leverages the established SR-MPLS infrastructure and BGP policy framework to enable deterministic routing and service-level optimization.
+This step deploys Segment Routing Traffic Engineering (SR-TE) policies using **IOS-XR 9000v** to provide explicit path control, service differentiation, and advanced traffic steering capabilities. The implementation leverages the established SR-MPLS infrastructure and BGP policy framework to enable deterministic routing and service-level optimization.
 
 ---
 
@@ -28,6 +28,10 @@ I will not test traffic, the lab will not go that far.
 ---
 
 ## 2. Implementation
+
+SR-TE will be configured on all **core devices**. Two (three in some cases) segment policies, `STD`(Standard) and `PREM` (Premium) will be set up following the **SR-TE color-based policy- and service matrix** above. The `segment-ouritng traffic-eng` is enabled globally, and logigng is turned on to track policy status.
+
+Then the **segment lists** are defined, that control which labels are used and in what order. These lists are for fixed paths, either altnerative paths, or specific routes via `RR1` and `RR2`. After that, the SR-TE policies are built, where the **standard policy** `OSLO_TO_BGO_STD` uses IGP cost for the dynamic path, and then falls back to explicit paths. The **premium policy** `OSLO_TO_BGO_PREM` prefers the TE metric (better latency), and also includes explicit paths as the backup. Each policy uses color to seperate the service types, and includes multiple preferences for path selection and failover.
 
 ### 2.1 Global SR-TE Configuration (All Core Devices)
 
@@ -261,15 +265,15 @@ segment-routing
 
 ## 3. BFD Configuration
 
-BFD will only be configured between R1_OSLO and RR2_BGO, as this is a simple lab project. The intent of this part is to verify BFD functionality and measure failover time compared to standard OSPF/BGP timers without BFD.
+BFD will only be configured between **R1_OSLO** and **RR2_BGO**, since this is a simple lab project. The goal is to test that BFD works, and to see how fast failover happens compared to normal OSPF/BGP timers without BFD.
 
 ### 3.1 R1_OSLO - Enable BFD on link to RR2_BGO:
 ```bash
 bfd
  interface GigabitEthernet0/0/0/5
   multiplier 3
-  rx-interval 50000         # Microseconds, results to 50ms
-  tx-interval 50000         # Microseconds, results to 50ms
+  rx-interval 50000         # Microseconds = 50ms
+  tx-interval 50000         # Microseconds = 50ms
  !
 !
 router ospf 10
@@ -283,8 +287,8 @@ router ospf 10
 bfd
  interface GigabitEthernet0/0/0/3
   multiplier 3
-  rx-interval 50000         # Microseconds, results to 50ms
-  tx-interval 50000         # Microseconds, results to 50ms
+  rx-interval 50000         # Microseconds = 50ms
+  tx-interval 50000         # Microseconds = 50ms
  !
 !
 router ospf 10
@@ -306,29 +310,29 @@ show segment-routing traffic-eng policy
 show segment-routing traffic-eng policy color [color]       # e.g. 300 on CORE1_OSLO
 ```
 
-All policies should show "Admin: `up`, Operational: `up` status. The highest preference candidate-path should be selected.
+All policies should show `Admin: up`, `Operational: up`. The highest preference candidate-path should be selected.
 
 ### 4.2 MPLS Forwarding Verification
 
-Confirm SR-TE policy installation:
+Confirm that the SR-TE policies are installed in the data plane:
 
 ```bash
 show mpls forwarding
 show segment-routing traffic-eng forwarding policy
 ```
 
-Segment lists should show proper label stack operations (Push/Swap/Pop) with valid next-hop interfaces and IP addresses.
+Segment lists should show correct label stack operations (Push/Swap/Pop) with valid next-hops.
 
 ### 4.3 Manual SR-TE Testing
 
-Test different SR-TE paths manually:
+Manually test traffic over the SR-TE path:
 
 ```bash
 ping 10.255.1.1 source 10.255.1.6           # CORE2_BGO to R1_OSLO
 traceroute 10.255.1.1 source 10.255.1.6     # CORE2_BGO to R1_OSLO
 ```
 
-- Pinging [`R1_OSLO from CORE1_BGO's Loopback0`](/wireshark/Step05-CORE1_OSLO-to-R1_OSLO-ICMP.pcap) shows an average ~9ms latency between packets. Route-map statistics should show traffic classification matches. Traceroute should show expected SR label operations.
+- Pinging [`R1_OSLO from CORE1_BGO's Loopback0`](/wireshark/Step05-CORE1_OSLO-to-R1_OSLO-ICMP.pcap)  shows an average ~9ms latency. Route-map stats should show traffic matching. Traceroute should show the expected SR label operations.
 
 ### 4.4 Path Verification
 
@@ -338,9 +342,11 @@ Verify explicit paths are working correctly:
 show segment-routing traffic-eng policy detail
 ```
 
+This confirms which segment-list is being used and that fallback paths are installed as backup.
+
 ### 4.5 BFD Verification
 
-Verify the BFD sessions are up:
+Verify that the BFD sessions are up and tied to the OSPF neighbor:
 ```bash
 # On R1_OSLO
 show bfd session
@@ -353,15 +359,13 @@ show ospf neighbor detail
 
 ### 4.6 BFD Failover Testing
 
-Interface `Gi0/0/0/5` on `R1_OSLO` was shut down to simulate a failure toward `RR2_BGO`. Since BFD was enabled, the failure was instantly detected, and OSPF reconverged in milliseconds compared to seconds. Traffic was rerouted via the backup path through `RR1_OSLO`.
+Interface `Gi0/0/0/5` on `R1_OSLO` was shut down to simulate failure toward `RR2_BGO`. BFD detected it instantly, and OSPF reconverged in milliseconds. Traffic was rerouted via the backup path through `RR1_OSLO`.
 
 ```bash
 ping 10.255.1.4      # R1_OSLO to RR2_BGO
 ```
 
-- [`Packet No. 600`](/wireshark/Step05-R1_OSLO-to-RR2_BGO-BFD-showcase.pcap) in the main **.pcap** file shows that BFD reported a diagnostic code **0x02** (Echo Function Failure) when Gi0/0/0/5 was shutdown.
-- A traceroute from [`R1_OSLO`](/wireshark/Step05-R1_OSLO-to-RR1_OSLO-for-RR2_BGO-BFD-traceroute.pcap), showed that the first hop reached `192.0.2.9` (Gi0/0/0/1 on RR1_OSLO).
-- The forwarding continued through **RR1_OSLO** to [`RR2_BGO`](/wireshark/Step05-RR1_OSLO-to-RR2_BGO-for-R1_OSLO-BFD-traceroute.pcap), confirming that the traffic was successfully rerouted due to the BFD-triggered failover.
+[`Packet No. 600`](/wireshark/Step05-R1_OSLO-to-RR2_BGO-BFD-showcase.pcap)  shows BFD reporting diagnostic code **0x02** (Echo Function Failure) when the link was shut. A traceroute from [`R1_OSLO`](/wireshark/Step05-R1_OSLO-to-RR1_OSLO-for-RR2_BGO-BFD-traceroute.pcap) confirmed that the first hop was `192.0.2.9` (RR1_OSLO Gi0/0/0/1), and continued through **RR1_OSLO** to [`RR2_BGO`](/wireshark/Step05-RR1_OSLO-to-RR2_BGO-for-R1_OSLO-BFD-traceroute.pcap), confirming the failover path was used as expected.
 
 ---
 
@@ -378,8 +382,6 @@ ping 10.255.1.4      # R1_OSLO to RR2_BGO
 ---
 
 ## 6. Rollback
-
-To remove all SR-TE policies:
 
 ### 6.1 R1_OSLO:
 ```bash

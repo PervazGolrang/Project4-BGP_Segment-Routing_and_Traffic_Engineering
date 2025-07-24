@@ -15,8 +15,6 @@ This step implements comprehensive BGP route policies using **IOS-XR** to enforc
 | R1_OSLO       | Customers     | Full table export, validation    | 65001:300           | 300              |
 | R2_BGO        | Customers     | Full table export, validation    | 65001:300           | 300              |
 
-BGO (Bergen) is used as the primary path due to it is closer to my home city, Stavanger.
-
 **BGP community allocation:**
 
 | Community    | Purpose                    | Applied To              | Policy Action               |
@@ -30,6 +28,14 @@ BGO (Bergen) is used as the primary path due to it is closer to my home city, St
 ---
 
 ## 2. Implementation
+
+This step follows the concepts from Step03, as it sets up prefix-sets, but now also community-sets to filter and tag routes between the upstream providers and the customer. `OWN_PREFIXES` is just what is locally owned, and `CUST1_PREFIXES` is what the customer is allowed to send. There are two community-sets:
+- One for routes learned from customers: `65001:100`
+- One for routes learned from the upstream ISPs: `65001:300`
+
+The route-policies use basic logic. When receiving routes from ISP1 and ISP2, they get tagged with `UPSTREAM_ROUTES` and are given a local-pref where ISP1 is prefered, (ISP1 = 120), and (ISP2 = 110). For the customer, it checks if the prefix is in `CUST1_PREFIXES`. If it is, then it's tagged as customer, it gets a local-pref of 300 (so it's preferred over the upstreams), origin is set to IGP, and it is **passed**. If it's not in the prefix-set, it is **dropped**.
+
+For outbound routes going to the ISPs, prefixes are only allowed if they came from customers or from `OWN_PREFIXES`, else they are **droppped**. These are also tagged with the customer community. When sending routes to the customer, it doesn't filter, but it tags them as upstream and passes them. This setup avoids leaks, adds simple community tagging for tracking, and gives preference to customer-learned prefixes over upstream ones. The same logic is mirrored to the other network devices, with slightly different configurations. They all follow the **Network policy matrix** and **BGP community allocation** at the top of the document.
 
 ### 2.1 R1_OSLO Configuration (Upstream + Customer)
 
@@ -120,6 +126,8 @@ router bgp 65001
    route-policy TO_CUSTOMER_OUT out
    maximum-prefix 50 75 restart 5
 ```
+
+Each neighbor gets the correct inbound and outbound policy. For the customer neighbor a `maximum-prefix 50 75 restart 5` is added. It means that the router will allow up to `50` prefixes from the customer. If it recieves more than `75%` of that (~38 prefixes), it gives a warning. If it hits `50`, the session is shutdown and auto-restarts after 5 minutes. It is a safety limit to avoid route floods.
 
 ### 2.2 R2_BGO Configuration (Upstream + Customer)
 
@@ -361,8 +369,7 @@ router bgp 65001
 
 ### 3.1 Policy Application Status
 
-Verify route policies are correctly applied:
-
+Verify that the route-policies are actually applied to the correct neighbors:
 ```bash
 show rpl
 show rpl route-policy TO_UPSTREAM_OUT
@@ -372,8 +379,7 @@ show bgp policy route-policy TO_UPSTREAM_OUT
 
 ### 3.2 Community Assignment Verification
 
-Confirm proper community tagging:
-
+Check that the correct communities are being tagged on received and advertised routes:
 ```bash
 show bgp community 65001:100
 show bgp community 65001:200
@@ -381,11 +387,11 @@ show bgp community 65001:300
 show bgp regexp _65001:
 ```
 
-Customer routes should be tagged with 65001:100, peer routes with 65001:200, upstream routes with 65001:300.
+These do depend on the network device where the mentioned community-set was configured on. Customer routes should be tagged with `65001:100`, peer routes with `65001:200`, and upstream routes with `65001:300`.
 
 ### 3.3 Route Advertisement Filtering
 
-Confirm outbound filtering per neighbor type:
+Confirm that outbound filtering is working and routes are being sent only to the right neighbors:
 
 ```bash
 show bgp neighbors <upstream-ip> advertised-routes

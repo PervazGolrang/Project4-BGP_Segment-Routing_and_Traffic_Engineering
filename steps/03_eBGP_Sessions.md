@@ -27,7 +27,9 @@ The existing **RR1_OSLO** and **RR2_BGO** hierarchy remains unchanged. The eBGP 
 
 ### 2.1 Upstream Provider Sessions
 
-Configuring prefix-sets and an if/else-statement for the customer policies.
+This one may be a bit more complex, as it is configuring inbound and outbound filtering policies for the customer BGP session using **prefix-sets** and **route-policies** on XR, these are similar to *prefix-list* and *route-maps* on IOS-XE. The goal is to strictly control what prefixes are accapted from, and what prefixes are advertised to the customer through theuse of if/else-statements.
+
+The `if/else` logic in the route-policies is acting as a filter. For **R1_OSLO**, in `CUST1_IN`, the router is checking that if a recieved prefix from the customer matches the `CUST1_IN` prefix-set of `198.51.100.0/25 le 32`. If it does, then the route is accapted (`pass`). If the route is outside the prefix-set `CUST1_IN`, then it is **rejected** (`drop`). The same logic applies to `CUST1_OUT`, which only allows advertisement of the default route `0.0.0.0/0`. This way it avoids route-leaks and accidental advertisement. Same concept as IOS-XE, just written in a cleaner, more code-like format. This is mirrored on the other network devices.
 
 **R1_OSLO Configuration:**
 
@@ -172,7 +174,7 @@ router bgp 65001
 
 ## 3. External Device Configurations
 
-These configurations are specifically for the external devices (meaning **non-core** devices), to establish a complete BGP session. Only the six **core** devices run **IOS XRv**, while the **non-core** are using **IOSv**. The configuration will be different.
+These configurations are specifically for the external devices (meaning **non-core** devices), to establish a complete BGP session. Only the six **core** devices run **IOS-XR 9000v**, while the **non-core** are using **IOSv**. The configuration will be different.
 
 ### 3.1 ISP1_OSLO Configuration (Upstream Provider)
 ```bash
@@ -284,14 +286,13 @@ router bgp 65003
 
 ### 4.1 eBGP Session State
 
-Verify that all the external BGP sessions are established:
-
+Verify that all external BGP sessions are established:
 ```bash
 show bgp ipv4 unicast summary
 show bgp ipv4 unicast neighbors <neighbor-ip> routes
 ```
 
-All eBGP sessions should show an `Established` state with an uptime counter incrementing without reset. The routes should show upstream/peer/costumer prefixes (depending on the network device tested),as-well-as the next-hop.
+All eBGP sessions should show an `Established` state with the uptime counter increasing without reset. The received routes should include upstream, peer, or customer prefixes (depending on which device is being checked), along with the correct next-hop information.
 
 ---
 

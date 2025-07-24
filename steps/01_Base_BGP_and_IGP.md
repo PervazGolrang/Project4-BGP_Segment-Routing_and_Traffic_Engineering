@@ -25,7 +25,7 @@ The core network consists of six devices:
 
 ### 2.1 Loopback Interface Configuration
 
-Configure to each core network device.
+Configure to each **core** network device.
 
 ```bash
 interface Loopback0
@@ -37,7 +37,7 @@ interface Loopback0
 
 ### 2.2 Point-to-Point Interface Configuration
 
-Configure all P2P interfaces with /31 subnets:
+Configure all P2P interfaces with a /31 subnets:
 
 ```bash
 interface GigabitEthernet0/0/0/1
@@ -48,7 +48,7 @@ interface GigabitEthernet0/0/0/1
 
 ### 2.3 OSPF Configuration
 
-**Area 0 design** with all interfaces in backbone area:
+**Area 0** with all interfaces in the backbone area:
 
 ```bash
 router ospf 10
@@ -63,7 +63,7 @@ router ospf 10
 
 ### 2.4 MPLS Configuration
 
-Enable MPLS on all core interfaces for future SR use:
+Enable MPLS on all **core** interfaces for SR use at Step05:
 
 ```bash
 mpls ldp
@@ -132,19 +132,18 @@ On IOS XR the `neighbor x.x.x.x activate` is not needed, as it automatically act
 
 ### 3.1 OSPF Verification
 
-Verify OSPF adjacencies and database:
-
+Verify the OSPF adjacencies and database:
 ```bash
 show ospf neighbor
 show ospf database
 show route ipv4 ospf
 ```
 
-All neighbor states should show `FULL`. The OSPF database should contain LSAs from all 6 core devices with /32 routes for all loopbacks. All core device loopbacks should be reachable via OSPF.
+All neighbor states should show `FULL`. The OSPF database should contain LSAs from all **six core devices** with a /32 route for all loopbacks. All **core** device loopbacks should be reachable via OSPF.
 
 ### 3.2 BGP Verification
 
-Verify iBGP sessions and route reflection:
+Verify the iBGP sessions and route reflection:
 
 ```bash
 show bgp summary
@@ -152,36 +151,32 @@ show bgp ipv4 unicast
 show bgp neighbour summary
 ```
 
-Both Route Reflectors should show **4 clients each**, and clients learn routes from **both route reflectors**, as well as the BGP unicast neighbor, which is the redundant Route Reflector.
+Both Route Reflectors should show **5 clients each**, and clients should learn routes from **both reflectors**, as well as from the directly configured BGP peer (the redundant route reflector).
 
 ### 3.3 Connectivity Testing
 
 Test end-to-end reachability:
-
 ```bash
 ping 10.255.1.1 source 10.255.1.6             #Pinging R1_OSLO from CORE2_BGO Lo0
 ping 10.255.1.2 source 10.255.1.5             #Pinging R2_BGO from CORE1_OSLO Lo0
 traceroute 10.255.1.3 source 10.255.1.6       #Traceroute RR1_OSLO from CORE2_BGO
 ```
 
-Expect a +100% success rate (after ARP), with a sub-10ms ICMP response time, and sub-20 traceroute response time in the lab environment. Ping will be lower due to routing and ARP, which is cached. While traceroute will send a new packate, through a new process in the control plane.
+Expect a +100% success rate (after ARP), with a sub-10ms ICMP response time, and a completed sub-50ms traceroute hop responses in the lab environment. Ping will be faster because it uses cached routing and ARP entries. Traceroute will be slower even if `minttl 1 maxttl 1` was used, because the routes generate ICMP Time Exceeded messages in the control plane, which causes significant delta delays, even if it is one hop away.
 
-Expect a +100% success rate (after ARP), with a sub-10ms ICMP response time, and a completed sub-50ms traceroute hop responses in the lab environment. Ping will be faster because it uses cached routing and ARP entries. Traceroute will be slower even if `minttl 1 maxttl 1` was used, because the routes generate ICMP Time Exceeded messages in the control plane, wihch causes significant delta delays, even if it is one hop away.
+- Pinging [`R1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-CORE2_BGO-to-R1_OSLO-ICMP.pcap)shows an average ~2ms latency. Traceroute follows the optimal OSPF path based on cost.
 
-- Pinging [`R1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-CORE2_BGO-to-R1_OSLO-ICMP.pcap) shows an average ~2ms latency between packets. Traceroute paths should follow optimal OSPF cost calculations.
-
-- Traceroute [`RR1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-RR1_OSLO-to-CORE2_BGO-TRACEROUTE.pcap) shows an average ~14ms latency between packets. Traceroute followed the optimal OSPF path through cost calculations. 
+- Traceroute to [`RR1_OSLO from CORE2_BGO's Loopback0`](/wireshark/Step01-RR1_OSLO-to-CORE2_BGO-TRACEROUTE.pcap) shows an average ~14ms latency. The path follows optimal OSPF cost as expected.
 
 ### 3.4 Route Reflection Verification
 
-Verify route reflector operation:
-
+Verify that route reflection is working as intended:
 ```bash
 show bgp ipv4 unicast neighbors <client-ip> advertised-routes
 show bgp ipv4 unicast neighbors <client-ip> routes
 ```
 
-Clients should receive reflected routes from other clients.
+Clients should receive reflected routes from other clients via the route reflector.
 
 ---
 

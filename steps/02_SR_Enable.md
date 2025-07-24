@@ -31,7 +31,7 @@ These six network devices will be refered as to the **Core Devices** throughout 
 - **CORE1_OSLO**:  `prefix-sid index 21`
 -  **CORE2_BGO**:  `prefix-sid index 22`
 
-Enable SR-MPLS globally on all **core** devices and configure the prefix-SID on the loopback interface:
+Enable SR-MPLS globally on all **core** network devices, and configure the prefix-SID on the loopback interface:
 
 ```bash
 segment-routing
@@ -46,7 +46,7 @@ router ospf 10
     prefix-sid index <INDEX>
 ```
 
-Due to the SRGB range config has been changed, the BGP's labels have to be re-programmed as per the new range with `process restart bgp`.
+Since the SRGB-range-config has been changed, the BGP's labels have to be re-programmed as per the new range, commit `process restart bgp`.
 
 ---
 
@@ -54,8 +54,7 @@ Due to the SRGB range config has been changed, the BGP's labels have to be re-pr
 
 ### 3.1 Segment Routing Global State
 
-Verify SR-MPLS is enabled with correct SRGB/SRLB ranges:
-
+Verify that SR-MPLS is enabled and that the SRGB/SRLB ranges are correctly configured:
 ```bash
 show segment-routing
 show segment-routing global-block
@@ -64,27 +63,23 @@ show segment-routing local-block
 
 ### 3.2 MPLS Forwarding Table
 
-Validate SR label installation:
-
+Validate that SR labels are installed properly:
 ```bash
 show mpls forwarding
 show mpls forwarding labels 16001 16022
 ```
 
-SR labels 16001-16022 should be installed with correct next-hops. Expect:
-- **Pop Label** action for directly connected node-SIDs
-- **Swap** operations for remote node-SIDs via optimal IGP paths
+SR labels `16001–16022` should be installed with correct next-hops. **Pop Label** is expected for directly connected node-SIDs, while **Swap** is used for remote node-SIDs along optimal IGP paths.
 
 ### 3.3 Node-SID Verification
 
-Verify each device's Node-SID:
-
+Confirm that each device's Node-SID is correctly advertised and installed:
 ```bash
 show segment-routing prefix-sid-map ipv4
 show ospf database segment-routing detail
 ```
 
-Each loopback should have its assigned index advertised in OSPF and installed in the MPLS forwarding table.
+Each loopback should have its assigned index advertised in OSPF and installed into the MPLS forwarding table.
 
 ---
 
