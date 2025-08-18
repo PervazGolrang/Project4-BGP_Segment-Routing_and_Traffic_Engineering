@@ -27,7 +27,7 @@ The existing **RR1_OSLO** and **RR2_BGO** hierarchy remains unchanged. The eBGP 
 
 ### 2.1 Upstream Provider Sessions
 
-This one may be a bit more complex, as it is configuring inbound and outbound filtering policies for the customer BGP session using **prefix-sets** and **route-policies** on XR, these are similar to *prefix-list* and *route-maps* on IOS-XE. The goal is to strictly control what prefixes are accapted from, and what prefixes are advertised to the customer through theuse of if/else-statements.
+These new configs may look a bit complex, but it does follow basic python-like structure, looking at it, the configuration is configuring inbound and outbound filtering policies for the customer BGP session using **prefix-sets** and **route-policies** on XR, these are similar to *prefix-list* and *route-maps* on IOS-XE. The goal is to strictly control what prefixes are accapted from, and what prefixes are advertised to the customer through theuse of if/else-statements.
 
 The `if/else` logic in the route-policies is acting as a filter. For **R1_OSLO**, in `CUST1_IN`, the router is checking that if a recieved prefix from the customer matches the `CUST1_IN` prefix-set of `198.51.100.0/25 le 32`. If it does, then the route is accapted (`pass`). If the route is outside the prefix-set `CUST1_IN`, then it is **rejected** (`drop`). The same logic applies to `CUST1_OUT`, which only allows advertisement of the default route `0.0.0.0/0`. This way it avoids route-leaks and accidental advertisement. Same concept as IOS-XE, just written in a cleaner, more code-like format. This is mirrored on the other network devices.
 
