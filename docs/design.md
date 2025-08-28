@@ -50,7 +50,7 @@ The lab is split into two primary PoPs:
 * **Route Reflectors**: Dual RR for iBGP scalability (RR1_OSLO and RR2_BGO)
 * **eBGP**:
   * ISP1/2 connected via eBGP to R1/R2
-  * Customers CUST1/2 use eBGP with private ASNs (e.g. 65010, 65020)
+  * Customers CUST1/2 use eBGP with private ASN 65003
   * PEER1/2 use eBGP with non-transitive sharing (no transit)
 
 ---
@@ -58,10 +58,10 @@ The lab is split into two primary PoPs:
 ## Segment Routing (SR-MPLS)
 
 * **Global SRGB**: 15000–15999
-* **Prefix SIDs**: Assigned to loopbacks of all ISP devices
+* **Prefix SIDs**: Assigned to loopbacks of SR core devices (R1_OSLO, R2_BGO, RR1_OSLO, RR2_BGO, CORE1_OSLO, CORE2_BGO)
 * **Adjacency SIDs**: Used for fast reroute and path pinning
 * **Peer SIDs**: For egress SR policy-based steering
-* **SID advertisement**: via BGP-LS or SR Extensions to BGP
+* **SID advertisement**: via OSPF with Segment Routing extensions
 
 ---
 

@@ -48,7 +48,7 @@ prefix-set OWN_PREFIXES
 end-set
 !
 prefix-set CUST1_PREFIXES
-  198.51.100.0/25 le 28
+  198.51.100.0/25 le 32
 end-set
 !
 community-set CUSTOMER_ROUTES
@@ -140,7 +140,7 @@ prefix-set OWN_PREFIXES
 end-set
 !
 prefix-set CUST2_PREFIXES
-  198.51.100.128/25 le 28
+  198.51.100.128/25 le 32
 end-set
 !
 community-set CUSTOMER_ROUTES
@@ -202,13 +202,13 @@ end-policy
 router bgp 65001
  neighbor 192.0.2.5
   address-family ipv4 unicast
-   route-policy FROM_ISP1_IN_R2 in
+   route-policy FROM_ISP1_IN in
    route-policy TO_UPSTREAM_OUT out
   !
  !
  neighbor 192.0.2.7
   address-family ipv4 unicast
-   route-policy FROM_ISP2_IN_R2 in
+   route-policy FROM_ISP2_IN in
    route-policy TO_UPSTREAM_OUT out
   !
  !

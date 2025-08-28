@@ -1,17 +1,17 @@
 # Project 4 - Segment Routing & Traffic Engineering
 
-This repository contains a realistic dual‑site service‑provider topology implemented entirely with **IOS XRv 9000v 24.3.1** images, using Segment Routing MPLS and traffic engineering on CML-2.8.1. The environment demonstrates how a regional ISP (AS 65001) can deliver deterministic traffic engineering, rapid fail‑over, and cost‑optimised peering.
+This repository contains a realistic dual-site service-provider topology implemented entirely with **IOS XRv 9000v 24.3.1** images, using **Segment Routing MPLS (SR-MPLS)** and traffic engineering on CML-2.8.1. The environment demonstrates how a regional ISP (AS 65001) can deliver deterministic traffic engineering, rapid fail-over, and cost-optimised peering.
 
 ---
 
 ## What This Lab Does
 This lab builds a regional ISP (AS 65001) operating two Points of Presence (PoPs): **Oslo** and **Bergen**, to learn how real service providers work. Each PoP provides paid transit and public peering for a customer network that is also present in both cities. The lab covers:
 
-- **BGP route reflection** - scaling iBGP without full mesh
-- **Segment Routing MPLS** - modern traffic engineering
-- **Business relationships** - upstream transit, public peering, customer services
-- **Traffic policies** - communities, local preference, prefix filtering
-- **Explicit path control** - SR-TE policies for deterministic routing
+- **BGP route reflection** - scaling iBGP without full mesh  
+- **Segment Routing MPLS** - modern traffic engineering (**no LDP used**)  
+- **Business relationships** - upstream transit, public peering, customer services  
+- **Traffic policies** - communities, local preference, prefix filtering  
+- **Explicit path control** - SR-TE policies for deterministic routing (explicit segment-lists, without PCEP)
 
 ---
 
@@ -72,4 +72,4 @@ Each step builds on the previous one.
 
 This lab pushed me way beyond basic networking into real Service Provider territory. The complexity of integrating BGP policies, Segment Routing, and traffic engineering took multiple attempts to get right. Lab journal, troubleshooting, and implementation challenges can be viewed at [`notes.md`](/notes.md).
 
-The goal of this lab was to understand how modern ISPs work, while challenging myself with BGP Segmented Routing and Traffic Engineering.
+The goal of this lab was to understand how modern ISPs work, while challenging myself with BGP Segment Routing and Traffic Engineering.

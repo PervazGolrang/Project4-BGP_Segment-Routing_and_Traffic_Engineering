@@ -1,6 +1,6 @@
 # Step 01 - IGP Underlay and BGP Overlay
 
-This step establishes the foundational control-plane infrastructure for the BGP Segment-Routing Traffic Engineering lab using **IOS-XR**. All core network devices participate in a unified OSPFv3 domain to provide IP reachability, while iBGP overlay sessions are established through route reflectors to enable scalable BGP convergence without full-mesh complexity.
+This step establishes the foundational control-plane infrastructure for the BGP Segment-Routing Traffic Engineering lab using **IOS-XR**. All core network devices participate in a unified OSPFv2 domain to provide IP reachability, while iBGP overlay sessions are established through route reflectors to enable scalable BGP convergence without full-mesh complexity.
 
 ---
 
@@ -59,16 +59,6 @@ router ospf 10
   !
   interface <CORE_INTERFACES>
     network point-to-point
-```
-
-### 2.4 MPLS Configuration
-
-Enable MPLS on all **core** interfaces for SR use at Step05:
-
-```bash
-mpls ldp
- router-id <ROUTER_ID>
- interface <CORE_INTERFACES>
 ```
 
 ### 2.5 BGP Route Reflector Configuration
@@ -148,7 +138,7 @@ Verify the iBGP sessions and route reflection:
 ```bash
 show bgp summary
 show bgp ipv4 unicast
-show bgp neighbour summary
+show bgp neighbors
 ```
 
 Both Route Reflectors should show **5 clients each**, and clients should learn routes from **both reflectors**, as well as from the directly configured BGP peer (the redundant route reflector).
@@ -188,7 +178,7 @@ Clients should receive reflected routes from other clients via the route reflect
 
 **Route reflection problems:** Confirm route-reflector-client configuration on RRs and proper neighbor-group usage.
 
-**MPLS issues:** Verify LDP is enabled on all core interfaces and router-id is configured.
+**SR-MPLS issues:** Verify SR is enabled on all core interfaces (show segment-routing mpls state) and that the SIDs are present (show segment-routing mpls connected-prefix-sid).
 
 ---
 

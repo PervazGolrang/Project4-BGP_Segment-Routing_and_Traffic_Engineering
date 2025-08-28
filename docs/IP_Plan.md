@@ -46,8 +46,8 @@ This IP-Plan follows a clear, structured model using /31 or /30 for point-to-poi
 | RR2_BGO ↔ CORE1_OSLO              | 192.0.2.20/31    | .20 (G0/4)      | .21 (G0/2)      |
 | RR2_BGO ↔ CORE2_BGO               | 192.0.2.22/31    | .22 (G0/2)      | .23 (G0/1)      |
 | RR1_OSLO ↔ RR2_BGO                | 192.0.2.24/31    | .24 (G0/5)      | .25 (G0/5)      |
-| CORE1_OSLO ↔ PEER1_OSLO           | 192.0.2.26/31    | .26 (G0/3)      | .27 (G/1)       |
-| CORE2_BGO ↔ PEER2_BGO             | 192.0.2.28/31    | .28 (G0/3)      | .29 (G/1)       |
+| CORE1_OSLO ↔ PEER1_OSLO           | 192.0.2.26/31    | .26 (G0/3)      | .27 (G0/1)      |
+| CORE2_BGO ↔ PEER2_BGO             | 192.0.2.28/31    | .28 (G0/3)      | .29 (G0/1)      |
 | CUST1_OSLO ↔ R1_OSLO              | 198.51.100.0/31  | .0 (G0/3)       | .1 (G0/1)       |
 | CUST1_OSLO ↔ CUST_CORE_OSLO       | 198.51.100.2/31  | .2 (G0/1)       | .3 (G0/2)       |
 | CUST2_BGO ↔ R2_BGO                | 198.51.100.4/31  | .4 (G0/3)       | .5 (G0/1)       |

@@ -29,7 +29,7 @@ I will not test traffic, the lab will not go that far.
 
 ## 2. Implementation
 
-SR-TE will be configured on all **core devices**. Two (three in some cases) segment policies, `STD`(Standard) and `PREM` (Premium) will be set up following the **SR-TE color-based policy- and service matrix** above. The `segment-ouritng traffic-eng` is enabled globally, and logigng is turned on to track policy status.
+SR-TE will be configured on all **core devices**. Two (three in some cases) segment policies, `STD`(Standard) and `PREM` (Premium) will be set up following the **SR-TE color-based policy- and service matrix** above. The `segment-routing traffic-eng` is enabled globally, and logigng is turned on to track policy status.
 
 Then the **segment lists** are defined, that control which labels are used and in what order. These lists are for fixed paths, either altnerative paths, or specific routes via `RR1` and `RR2`. After that, the SR-TE policies are built, where the **standard policy** `OSLO_TO_BGO_STD` uses IGP cost for the dynamic path, and then falls back to explicit paths. The **premium policy** `OSLO_TO_BGO_PREM` prefers the TE metric (better latency), and also includes explicit paths as the backup. Each policy uses color to seperate the service types, and includes multiple preferences for path selection and failover.
 
@@ -76,17 +76,9 @@ segment-routing
 segment-routing
  traffic-eng
   policy OSLO_TO_BGO_STD
+   autoroute announce
    color 200 end-point ipv4 10.255.1.2
    candidate-paths
-    preference 50
-     dynamic
-      pcep
-      !
-      metric
-       type igp
-      !
-     !
-    !
     preference 90
      explicit segment-list OSLO_BGO_ALT
      !
@@ -99,16 +91,8 @@ segment-routing
   !
   policy OSLO_TO_BGO_PREM
    color 100 end-point ipv4 10.255.1.2
+   autoroute announce
    candidate-paths
-    preference 80
-     dynamic
-      pcep
-      !
-      metric
-       type te
-      !
-     !
-    !
     preference 90
      explicit segment-list OSLO_BGO_VIA_RR1_RR2
      !
@@ -150,16 +134,8 @@ segment-routing
  traffic-eng
   policy BGO_TO_OSLO_STD
    color 200 end-point ipv4 10.255.1.1
+   autoroute announce
    candidate-paths
-    preference 50
-     dynamic
-      pcep
-      !
-      metric
-       type igp
-      !
-     !
-    !
     preference 90
      explicit segment-list BGO_OSLO_ALT
      !
@@ -172,16 +148,8 @@ segment-routing
   !
   policy BGO_TO_OSLO_PREM
    color 100 end-point ipv4 10.255.1.1
+   autoroute announce
    candidate-paths
-    preference 80
-     dynamic
-      pcep
-      !
-      metric
-       type te
-      !
-     !
-    !
     preference 90
      explicit segment-list BGO_OSLO_VIA_RR2_RR1
      !
@@ -207,16 +175,8 @@ segment-routing
   !
   policy CORE1_DIRECT
    color 300 end-point ipv4 10.255.1.6
+   autoroute announce
    candidate-paths
-    preference 30
-     dynamic
-      pcep
-      !
-      metric
-       type te
-      !
-     !
-    !     
     preference 50
      explicit segment-list CORE1_VIA_RR
      !
@@ -242,22 +202,10 @@ segment-routing
   !
   policy CORE2_DIRECT
    color 300 end-point ipv4 10.255.1.5
+   autoroute announce
    candidate-paths
-    preference 30
-     dynamic
-      pcep
-      !
-      metric
-       type te
-      !
-     !
-     constraints
-      disjoint-path group-id 1 type link
-     !
-    !
     preference 50
      explicit segment-list CORE2_VIA_RR
-     !
     !
     preference 100
      explicit segment-list CORE2_DIRECT_PATH
@@ -271,9 +219,8 @@ BFD will only be configured between **R1_OSLO** and **RR2_BGO**, since this is a
 ```bash
 bfd
  interface GigabitEthernet0/0/0/5
+  minimum-interval 50
   multiplier 3
-  rx-interval 50000         # Microseconds = 50ms
-  tx-interval 50000         # Microseconds = 50ms
  !
 !
 router ospf 10
@@ -286,9 +233,8 @@ router ospf 10
 ```bash
 bfd
  interface GigabitEthernet0/0/0/3
+  minimum-interval 50
   multiplier 3
-  rx-interval 50000         # Microseconds = 50ms
-  tx-interval 50000         # Microseconds = 50ms
  !
 !
 router ospf 10

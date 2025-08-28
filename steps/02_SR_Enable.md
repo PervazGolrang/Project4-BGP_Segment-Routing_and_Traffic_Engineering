@@ -35,8 +35,9 @@ Enable SR-MPLS globally on all **core** network devices, and configure the prefi
 
 ```bash
 segment-routing
- global-block 16000 23999
- local-block 15000 15999
+ mpls
+  global-block 16000 23999
+  local-block 15000 15999
 !
 router ospf 10
  segment-routing mpls
@@ -59,6 +60,7 @@ Verify that SR-MPLS is enabled and that the SRGB/SRLB ranges are correctly confi
 show segment-routing
 show segment-routing global-block
 show segment-routing local-block
+show segment-routing mpls global-block
 ```
 
 ### 3.2 MPLS Forwarding Table
@@ -87,7 +89,7 @@ Each loopback should have its assigned index advertised in OSPF and installed in
 
 **SR not enabled**: Check that `show segment-routing` shows the enabled state and proper SRGB configuration.
 
-**MPLS forwarding missing**: Confirm that MPLS LDP is enabled on the interfaces, and that the SR labels appear in `show mpls forwarding`.
+**MPLS forwarding missing**: Confirm SR is enabled and SIDs appear on the interfaces, and that the SR labels appear in `show mpls forwarding`.
 
 **Label conflicts**: Ensure that the SID indices don't conflict and fall within the SRGB range.
 

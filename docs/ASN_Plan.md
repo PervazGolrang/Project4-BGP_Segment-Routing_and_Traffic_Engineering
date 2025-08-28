@@ -42,7 +42,7 @@ All internal routers participate in iBGP using route reflector hierarchy:
 
 #### Customer Connections
 - **R1_OSLO** ↔ **CUST1_OSLO** (198.51.100.0/31)
-- **R2_BGO** ↔ **CUST2_BGO** (198.51.100.6/31)
+- **R2_BGO** ↔ **CUST2_BGO** (198.51.100.4/31)
 
 ---
 
